@@ -4,7 +4,7 @@ Fabric mod for Minecraft 26.3 / Java 25. This build implements a playable event 
 
 ## Install and build
 
-Use JDK 25. Run `./gradlew build`, then copy `build/libs/battle-chickens-1.0.0.jar` and Fabric API into `mods` on a Fabric 26.3 client or server. For development, run `./gradlew runClient`.
+Use JDK 25. Run `./gradlew build`, then copy `build/libs/battle-chickens-1.0.1.jar` and Fabric API into `mods` on a Fabric 26.3 client or server. For development, run `./gradlew runClient`.
 
 ## Configure
 
@@ -83,7 +83,7 @@ Every mod-created chicken role has its own server-registered entity type; natura
 
 Item and block texture paths are `src/main/resources/assets/battle-chickens/textures/item/` and `.../textures/block/`; the corresponding item/block JSON models are under `assets/battle-chickens/models/`. If starting with only three pieces, model the Overlord Rooster, the armored Ravager, and the RPG Chicken first. Keep each `.bbmodel` alongside its exported PNG so the source remains editable. Day 7 uses the large Sky Overlord Phantom model alongside the Ravager; regular Phantom gunships also remain.
 
-I added provisional, original 64x32 pixel-art role skins for the custom chicken entities in `src/main/resources/assets/battle-chickens/textures/entity/chicken/` (`warrior`, `militia`, `scavenger`, `rpg`, `overlord_rpg`, `grenadier`, `sniper`, `medic`, `riot`, `sergeant`, `summoner`, `tank`, `bomber`, `buffer`, `overlord`, `bombardier`, `gunner`, `guard`, `summoned`, and `giga`). The client renderer selects each skin from the registered entity type. Item and block art is in `src/main/resources/assets/battle-chickens/textures/item/` and `.../textures/block/`. These are starter pixel-art textures and can be replaced directly, preserving filenames and 64x32 dimensions. The grenade's editable JSON cuboid model is `assets/battle-chickens/models/item/purge_grenade.json`; its held/backpack/projectile art all use the same texture. Chicken geometry remains vanilla; custom role models need a custom renderer/model integration.
+The custom chicken entities have individually redrawn 64x32 pixel-art skins in `src/main/resources/assets/battle-chickens/textures/entity/chicken/`. Each atlas follows the vanilla chicken model's UV layout, leaving unused texture regions transparent; the role variants use distinct palettes and markings for their armor, insignia, and equipment. The client renderer selects skins by registered entity type. Preserve the existing filenames and 64x32 dimensions when replacing them. Item and block art is in `src/main/resources/assets/battle-chickens/textures/item/` and `.../textures/block/`. The grenade's editable JSON cuboid model is `assets/battle-chickens/models/item/purge_grenade.json`; its held/backpack/projectile art all use the same texture. Chicken geometry remains vanilla; custom role models need a custom renderer/model integration.
 
 ## Scope
 
