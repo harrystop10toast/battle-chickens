@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" G ", "BCB", " G "],
+  "key": {
+    "G": "minecraft:gold_nugget",
+    "B": "minecraft:cooked_chicken",
+    "C": "battle-chickens:golden_feather"
+  },
+  "result": {"id": "battle-chickens:drumstick_of_valor", "count": 1}
+}

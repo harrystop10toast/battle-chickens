@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["  F", " I ", "S  "],
+  "key": {
+    "F": "battle-chickens:war_feather",
+    "I": "minecraft:iron_ingot",
+    "S": "battle-chickens:scrap_plate"
+  },
+  "result": {"id": "battle-chickens:rooster_spear", "count": 1}
+}

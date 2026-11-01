@@ -1,0 +1,22 @@
+{
+  "parent": "battle-chickens:first_egg",
+  "display": {
+    "icon": {
+      "id": "minecraft:feather"
+    },
+    "title": {
+      "text": "Not My Chicken"
+    },
+    "description": {
+      "text": "Survive Day 1 without harming a peaceful chicken."
+    },
+    "show_toast": true,
+    "announce_to_chat": true,
+    "frame": "task"
+  },
+  "criteria": {
+    "not_my_chicken": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

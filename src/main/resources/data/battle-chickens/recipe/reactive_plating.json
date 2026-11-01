@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["PCP", "PSP", "PPP"],
+  "key": {
+    "P": "battle-chickens:scrap_plate",
+    "C": "battle-chickens:scrap_circuit",
+    "S": "minecraft:shield"
+  },
+  "result": {"id": "battle-chickens:reactive_plating", "count": 1}
+}

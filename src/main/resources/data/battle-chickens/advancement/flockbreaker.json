@@ -1,0 +1,22 @@
+{
+  "parent": "battle-chickens:first_egg",
+  "display": {
+    "icon": {
+      "id": "battle-chickens:overlord_crown"
+    },
+    "title": {
+      "text": "Flockbreaker"
+    },
+    "description": {
+      "text": "Defeat the Overlord and claim a Flockbreaker rank."
+    },
+    "show_toast": true,
+    "announce_to_chat": true,
+    "frame": "challenge"
+  },
+  "criteria": {
+    "victory": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

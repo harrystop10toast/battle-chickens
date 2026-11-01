@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "id": "battle-chickens:ominous_egg"
+    },
+    "title": {
+      "text": "First Egg"
+    },
+    "description": {
+      "text": "Awaken the flock and begin a Purge."
+    },
+    "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "frame": "task"
+  },
+  "criteria": {
+    "awakened": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

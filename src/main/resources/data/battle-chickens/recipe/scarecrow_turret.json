@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["SCS", "H P", "S S"],
+  "key": {
+    "S": "minecraft:stick",
+    "C": "battle-chickens:scrap_circuit",
+    "H": "minecraft:hay_block",
+    "P": "minecraft:carved_pumpkin"
+  },
+  "result": {
+    "id": "battle-chickens:scarecrow_turret",
+    "count": 1
+  }
+}

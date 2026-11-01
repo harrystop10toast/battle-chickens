@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "PGP",
+    " P "
+  ],
+  "key": {
+    "C": "battle-chickens:rocket_casing",
+    "P": "minecraft:paper",
+    "G": "minecraft:gunpowder"
+  },
+  "result": {
+    "id": "battle-chickens:dud_rocket",
+    "count": 1
+  }
+}

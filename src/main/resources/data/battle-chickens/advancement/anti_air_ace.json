@@ -1,0 +1,22 @@
+{
+  "parent": "battle-chickens:first_egg",
+  "display": {
+    "icon": {
+      "id": "battle-chickens:flak_cannon"
+    },
+    "title": {
+      "text": "Anti-Air Ace"
+    },
+    "description": {
+      "text": "Shoot down ten Purge drones or gunships."
+    },
+    "show_toast": true,
+    "announce_to_chat": true,
+    "frame": "goal"
+  },
+  "criteria": {
+    "anti_air_ace": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "battle-chickens:warlord_ominous_egg",
+    "minecraft:nether_star",
+    "battle-chickens:overlord_shard"
+  ],
+  "result": {
+    "id": "battle-chickens:singularity_ominous_egg",
+    "count": 1
+  }
+}

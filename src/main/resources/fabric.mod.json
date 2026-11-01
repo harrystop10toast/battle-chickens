@@ -1,0 +1,27 @@
+{
+	"schemaVersion": 1,
+	"id": "battle-chickens",
+	"version": "${version}",
+	"name": "Chicken Overlord: The Great Purge",
+	"description": "Craft an Ominous Egg, fight armed chicken waves, collect salvage, and take on the Overlord.",
+	"authors": [
+		"Chicken Overlord team"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/battle-chickens/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.cluck.BattleChickens"
+		],
+		"client": [
+			"com.cluck.client.BattleChickensClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

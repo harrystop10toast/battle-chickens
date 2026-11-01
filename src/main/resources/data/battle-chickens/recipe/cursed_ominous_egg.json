@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "battle-chickens:ominous_egg",
+    "minecraft:ominous_bottle",
+    "minecraft:nether_star"
+  ],
+  "result": {
+    "id": "battle-chickens:cursed_ominous_egg",
+    "count": 1
+  }
+}

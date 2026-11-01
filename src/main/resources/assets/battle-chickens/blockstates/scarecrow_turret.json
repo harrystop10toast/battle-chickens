@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "battle-chickens:block/scarecrow_turret"
+      }
+    }
+  ]
+}

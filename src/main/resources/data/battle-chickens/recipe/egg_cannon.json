@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["SES", "CEC", " I "],
+  "key": {
+    "S": "battle-chickens:scrap_plate",
+    "E": "minecraft:egg",
+    "C": "battle-chickens:rocket_casing",
+    "I": "battle-chickens:scrap_circuit"
+  },
+  "result": {"id": "battle-chickens:egg_cannon", "count": 1}
+}

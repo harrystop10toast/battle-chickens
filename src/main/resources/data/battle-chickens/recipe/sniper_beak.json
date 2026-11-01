@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [" CI", "SII", "  I"],
+  "key": {
+    "C": "battle-chickens:scrap_circuit",
+    "S": "minecraft:spyglass",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {"id": "battle-chickens:sniper_beak", "count": 1}
+}

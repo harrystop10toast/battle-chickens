@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "battle-chickens:cursed_ominous_egg",
+    "minecraft:blaze_rod",
+    "battle-chickens:golden_feather"
+  ],
+  "result": {
+    "id": "battle-chickens:warlord_ominous_egg",
+    "count": 1
+  }
+}

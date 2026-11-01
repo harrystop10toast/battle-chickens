@@ -1,0 +1,22 @@
+{
+  "parent": "battle-chickens:first_egg",
+  "display": {
+    "icon": {
+      "id": "battle-chickens:emp_disruptor"
+    },
+    "title": {
+      "text": "Pulled the Plug"
+    },
+    "description": {
+      "text": "Destroy a Radar Coop before Day 6."
+    },
+    "show_toast": true,
+    "announce_to_chat": true,
+    "frame": "goal"
+  },
+  "criteria": {
+    "pulled_the_plug": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

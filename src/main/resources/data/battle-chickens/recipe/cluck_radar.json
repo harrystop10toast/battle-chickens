@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [" C ", "IRI", " C "],
+  "key": {
+    "C": "battle-chickens:scrap_circuit",
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone"
+  },
+  "result": {"id": "battle-chickens:cluck_radar", "count": 1}
+}

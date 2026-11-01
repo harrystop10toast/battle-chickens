@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [" PC", " PI", "  I"],
+  "key": {
+    "P": "battle-chickens:scrap_plate",
+    "C": "battle-chickens:rocket_casing",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {"id": "battle-chickens:flame_fryer", "count": 1}
+}

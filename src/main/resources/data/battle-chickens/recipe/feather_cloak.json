@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["FMF", "FCF", " P "],
+  "key": {
+    "F": "battle-chickens:war_feather",
+    "M": "minecraft:phantom_membrane",
+    "C": "battle-chickens:scrap_circuit",
+    "P": "battle-chickens:scrap_plate"
+  },
+  "result": {"id": "battle-chickens:feather_cloak", "count": 1}
+}

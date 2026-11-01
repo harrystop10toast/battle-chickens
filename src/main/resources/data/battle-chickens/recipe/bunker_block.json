@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["SPS", "POP", "SPS"],
+  "key": {
+    "S": "minecraft:obsidian",
+    "P": "battle-chickens:scrap_plate",
+    "O": "minecraft:iron_block"
+  },
+  "result": {"id": "battle-chickens:bunker_block", "count": 4}
+}

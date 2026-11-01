@@ -1,0 +1,22 @@
+{
+  "parent": "battle-chickens:first_egg",
+  "display": {
+    "icon": {
+      "id": "battle-chickens:sniper_beak"
+    },
+    "title": {
+      "text": "Silent Hunter"
+    },
+    "description": {
+      "text": "Defeat a Sniper Hen from behind."
+    },
+    "show_toast": true,
+    "announce_to_chat": true,
+    "frame": "goal"
+  },
+  "criteria": {
+    "silent_hunter": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

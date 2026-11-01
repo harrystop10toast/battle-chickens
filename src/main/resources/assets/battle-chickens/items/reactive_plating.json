@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "battle-chickens:item/reactive_plating"
+  }
+}

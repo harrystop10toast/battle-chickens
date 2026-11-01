@@ -1,0 +1,22 @@
+{
+  "parent": "battle-chickens:flockbreaker",
+  "display": {
+    "icon": {
+      "id": "battle-chickens:cluck_shield"
+    },
+    "title": {
+      "text": "Untouchable"
+    },
+    "description": {
+      "text": "Win a Purge without dying."
+    },
+    "show_toast": true,
+    "announce_to_chat": true,
+    "frame": "challenge"
+  },
+  "criteria": {
+    "untouchable": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

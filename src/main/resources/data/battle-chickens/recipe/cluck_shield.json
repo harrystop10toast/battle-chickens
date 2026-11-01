@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["SCS", "SGS", " S "],
+  "key": {
+    "S": "battle-chickens:scrap_plate",
+    "C": "battle-chickens:scrap_circuit",
+    "G": "minecraft:gold_ingot"
+  },
+  "result": {"id": "battle-chickens:cluck_shield", "count": 1}
+}

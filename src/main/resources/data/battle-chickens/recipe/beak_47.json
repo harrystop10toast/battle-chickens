@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["SCS", "SIS", "  I"],
+  "key": {
+    "S": "battle-chickens:scrap_plate",
+    "C": "battle-chickens:scrap_circuit",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {"id": "battle-chickens:beak_47", "count": 1}
+}

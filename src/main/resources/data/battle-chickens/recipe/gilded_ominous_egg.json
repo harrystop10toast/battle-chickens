@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "battle-chickens:ominous_egg",
+    "minecraft:gold_block",
+    "minecraft:netherite_scrap"
+  ],
+  "result": {
+    "id": "battle-chickens:gilded_ominous_egg",
+    "count": 1
+  }
+}

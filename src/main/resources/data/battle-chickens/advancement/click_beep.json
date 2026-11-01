@@ -1,0 +1,22 @@
+{
+  "parent": "battle-chickens:first_egg",
+  "display": {
+    "icon": {
+      "id": "battle-chickens:captured_peckzooka"
+    },
+    "title": {
+      "text": "Click-Beep"
+    },
+    "description": {
+      "text": "Survive an RPG blast by taking cover."
+    },
+    "show_toast": true,
+    "announce_to_chat": true,
+    "frame": "goal"
+  },
+  "criteria": {
+    "click_beep": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

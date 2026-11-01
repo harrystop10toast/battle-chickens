@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IPI",
+    "PFP",
+    "IPI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "P": "minecraft:oak_planks",
+    "F": "minecraft:feather"
+  },
+  "result": {
+    "id": "battle-chickens:scrap_bench",
+    "count": 1
+  }
+}
