@@ -46,7 +46,7 @@ public final class ModItems {
 	public static final Item PURGE_GRENADE = material("purge_grenade");
 	public static final Item FLOCKWAR_HORN = registerFlockwarHorn();
 	public static final Item CAPTURED_PECKZOOKA = registerPeckzooka();
-	public static final Item CLUCK_SHIELD = battleTech("cluck_shield", BattleTechItem.Ability.CLUCK_SHIELD);
+	public static final Item CLUCK_SHIELD = registerCluckShield();
 	public static final Item FEATHER_CLOAK = battleTech("feather_cloak", BattleTechItem.Ability.FEATHER_CLOAK);
 	public static final Item EMP_DISRUPTOR = battleTech("emp_disruptor", BattleTechItem.Ability.EMP_DISRUPTOR);
 	public static final Item EGG_CANNON = battleTech("egg_cannon", BattleTechItem.Ability.EGG_CANNON);
@@ -62,6 +62,9 @@ public final class ModItems {
 	public static final Item CLUCK_RADAR = battleTech("cluck_radar", BattleTechItem.Ability.CLUCK_RADAR);
 	public static final Item SIGNAL_SCRAMBLER = battleTech("signal_scrambler", BattleTechItem.Ability.SIGNAL_SCRAMBLER);
 	public static final Item GOLDEN_EGG = battleTech("golden_egg", BattleTechItem.Ability.GIGA_CHICKEN_EGG);
+	public static final Item GENERATOR_CORE = material("generator_core");
+	public static final Item FLOCKGUARD_SIGIL = registerFlockguardSigil();
+	public static final Item LASSO = registerLasso();
 
 	private ModItems() {
 	}
@@ -81,7 +84,8 @@ public final class ModItems {
 		var id = BattleChickens.id("bunker_block");
 		var blockKey = ResourceKey.create(Registries.BLOCK, id);
 		var block = Registry.register(BuiltInRegistries.BLOCK, id,
-				new BunkerBlock(BlockBehaviour.Properties.of().strength(5.0F, 1200.0F).setId(blockKey)));
+				new BunkerBlock(BlockBehaviour.Properties.of().strength(50.0F, 1200.0F)
+						.requiresCorrectToolForDrops().setId(blockKey)));
 		var itemKey = ResourceKey.create(Registries.ITEM, id);
 		return Registry.register(BuiltInRegistries.ITEM, id, new BlockItem(block, new Item.Properties().setId(itemKey)));
 	}
@@ -100,12 +104,12 @@ public final class ModItems {
 	private static Item registerScarecrowTurret() {
 		var id = BattleChickens.id("scarecrow_turret");
 		var blockKey = ResourceKey.create(Registries.BLOCK, id);
-		var block = Registry.register(BuiltInRegistries.BLOCK, id,
+		Registry.register(BuiltInRegistries.BLOCK, id,
 				new ScarecrowTurretBlock(BlockBehaviour.Properties.of().strength(2.0F)
 						.sound(SoundType.WOOD).setId(blockKey)));
 		var itemKey = ResourceKey.create(Registries.ITEM, id);
 		return Registry.register(BuiltInRegistries.ITEM, id,
-				new BlockItem(block, new Item.Properties().setId(itemKey)));
+				new ScarecrowTurretItem(new Item.Properties().setId(itemKey).stacksTo(1)));
 	}
 
 	private static PurgeCoopBlock registerCoopBlock(String name, PurgeCoopBlock.Mode mode) {
@@ -169,6 +173,42 @@ public final class ModItems {
 				new FlockwarHornItem(new Item.Properties().setId(key).stacksTo(1)));
 	}
 
+	private static Item registerFlockguardSigil() {
+		var id = BattleChickens.id("flockguard_sigil");
+		var key = ResourceKey.create(Registries.ITEM, id);
+		var modifiers = net.minecraft.world.item.component.ItemAttributeModifiers.builder()
+				.add(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE,
+						new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+								BattleChickens.id("flockguard_sigil_knockback_resistance"), 1.0,
+								net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE),
+						net.minecraft.world.entity.EquipmentSlotGroup.HAND)
+				.build();
+		return Registry.register(BuiltInRegistries.ITEM, id,
+				new Item(new Item.Properties().setId(key).stacksTo(1).attributes(modifiers)));
+	}
+
+	private static Item registerCluckShield() {
+		var id = BattleChickens.id("cluck_shield");
+		var key = ResourceKey.create(Registries.ITEM, id);
+		var modifiers = net.minecraft.world.item.component.ItemAttributeModifiers.builder()
+				.add(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE,
+						new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+								BattleChickens.id("cluck_shield_knockback_resistance"), 0.9,
+								net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE),
+						net.minecraft.world.entity.EquipmentSlotGroup.HAND)
+				.build();
+		return Registry.register(BuiltInRegistries.ITEM, id,
+				new BattleTechItem(new Item.Properties().setId(key).stacksTo(1).attributes(modifiers),
+						BattleTechItem.Ability.CLUCK_SHIELD));
+	}
+
+	private static Item registerLasso() {
+		var id = BattleChickens.id("lasso");
+		var key = ResourceKey.create(Registries.ITEM, id);
+		return Registry.register(BuiltInRegistries.ITEM, id,
+				new LassoItem(new Item.Properties().setId(key).stacksTo(1)));
+	}
+
 	private static Item battleTech(String name, BattleTechItem.Ability ability) {
 		return battleTech(name, ability, 1);
 	}
@@ -225,6 +265,9 @@ public final class ModItems {
 			output.accept(CLUCK_RADAR);
 			output.accept(SIGNAL_SCRAMBLER);
 			output.accept(GOLDEN_EGG);
+			output.accept(GENERATOR_CORE);
+			output.accept(FLOCKGUARD_SIGIL);
+			output.accept(LASSO);
 		});
 	}
 }

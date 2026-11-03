@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "battle-chickens:block/scarecrow_turret"
+    "model": "battle-chickens:item/scarecrow_turret"
   }
 }

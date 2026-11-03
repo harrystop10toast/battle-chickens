@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["WGW", "FSF", "WPW"],
+  "key": {
+    "W": "battle-chickens:war_feather",
+    "G": "battle-chickens:golden_feather",
+    "F": "battle-chickens:generator_core",
+    "S": "minecraft:shield",
+    "P": "battle-chickens:scrap_plate"
+  },
+  "result": {
+    "id": "battle-chickens:flockguard_sigil",
+    "count": 1
+  }
+}

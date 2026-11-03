@@ -2,6 +2,9 @@ package com.cluck.event;
 
 import com.cluck.BattleChickens;
 import com.cluck.item.ModItems;
+import com.cluck.item.LassoToss;
+import com.cluck.item.ScarecrowTurretItem;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -16,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -38,6 +42,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
 public final class PurgeManager {
@@ -48,15 +53,24 @@ public final class PurgeManager {
 	private static int displayedDay;
 	private static int bossAbandonmentTicks;
 	private static final Set<UUID> DAMAGE_CAP_REENTRY = new HashSet<>();
+	private static final Set<UUID> FLOCKGUARD_REENTRY = new HashSet<>();
+	private static final Set<UUID> EXPLOSION_SHIELD_REENTRY = new HashSet<>();
 
 	private PurgeManager() {
 	}
 
 	public static void register() {
+		ScarecrowTurretItem.registerEntityInteraction();
 		ServerTickEvents.END_SERVER_TICK.register(PurgeManager::tick);
 		ServerLivingEntityEvents.AFTER_DEATH.register(PurgeManager::onDeath);
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (DAMAGE_CAP_REENTRY.contains(entity.getUUID())) {
+				return true;
+			}
+			if (FLOCKGUARD_REENTRY.contains(entity.getUUID())) {
+				return true;
+			}
+			if (EXPLOSION_SHIELD_REENTRY.contains(entity.getUUID())) {
 				return true;
 			}
 			Entity attacker = source.getEntity();
@@ -64,8 +78,94 @@ public final class PurgeManager {
 					&& projectile.getOwner() != null) {
 				attacker = projectile.getOwner();
 			}
-			if (PurgeUnits.isPurgeAlly(entity) && PurgeUnits.isPurgeAlly(attacker)
-					&& !(PurgeUnits.isBoss(attacker) && BossController.isAerialBoss(entity))) {
+			if (entity instanceof ServerPlayer player && attacker instanceof LivingEntity livingAttacker
+					&& entity.level() instanceof ServerLevel level
+					&& !PurgeUnits.hasClearAttackPath(level, livingAttacker, player)) {
+				return false;
+			}
+			if (entity instanceof ServerPlayer player && source.is(DamageTypeTags.IS_EXPLOSION)
+					&& player.getOffhandItem().is(ModItems.CLUCK_SHIELD)
+					&& entity.level() instanceof ServerLevel level) {
+				EXPLOSION_SHIELD_REENTRY.add(entity.getUUID());
+				try {
+					player.hurtServer(level, source, amount * 0.5F);
+				} finally {
+					EXPLOSION_SHIELD_REENTRY.remove(entity.getUUID());
+				}
+				return false;
+			}
+			if (entity instanceof Chicken chicken
+					&& chicken.getVehicle() instanceof LivingEntity mount
+					&& entity.level() instanceof ServerLevel level
+					&& chicken.getCustomName() != null) {
+				String riderName = chicken.getCustomName().getString();
+				boolean sharesRavagerHealth = riderName.equals("Overlord Rooster") && PurgeUnits.isBoss(mount);
+				boolean sharesPhantomHealth = riderName.equals("Overlord Bombardier")
+						&& BossController.isAerialBoss(mount);
+				if (sharesRavagerHealth || sharesPhantomHealth) {
+					if (attacker != mount) {
+						mount.hurtServer(level, source, amount);
+					}
+					return false;
+				}
+			}
+			if (entity instanceof ServerPlayer player && attacker instanceof Chicken
+					&& (player.getMainHandItem().is(ModItems.FLOCKGUARD_SIGIL)
+							|| player.getOffhandItem().is(ModItems.FLOCKGUARD_SIGIL))
+					&& entity.level() instanceof ServerLevel level) {
+				FLOCKGUARD_REENTRY.add(entity.getUUID());
+				try {
+					entity.hurtServer(level, source, amount * 0.6F);
+				} finally {
+					FLOCKGUARD_REENTRY.remove(entity.getUUID());
+				}
+				return false;
+			}
+			if (PurgeUnits.isPurgeAlly(entity) && PurgeUnits.isPurgeAlly(attacker)) {
+				if (BossController.isGenerator(entity)) {
+					// Shield golem can be hit by Sky Overlord nuke/contact to make the fight easier.
+					if (!BossController.isAerialBoss(attacker)) {
+						return false;
+					}
+				} else {
+					boolean attackerBoss = PurgeUnits.isBoss(attacker) || BossController.isAerialBoss(attacker);
+					boolean attackerChicken = PurgeUnits.isChickenAlly(attacker);
+					boolean entityBoss = PurgeUnits.isBoss(entity) || BossController.isAerialBoss(entity);
+					boolean entityChicken = PurgeUnits.isChickenAlly(entity);
+					if (attackerBoss && entityChicken) {
+						return true;
+					}
+					if (BossController.isGenerator(attacker) && entityChicken) {
+						return true;
+					}
+					if (attackerChicken && entityBoss) {
+						return true;
+					}
+					if (PurgeUnits.isBoss(attacker) && BossController.isAerialBoss(entity)) {
+						return true;
+					}
+					return false;
+				}
+			}
+			if (BossController.isAerialBoss(entity) && PurgeUnits.isBoss(attacker)
+					&& entity.level() instanceof ServerLevel level) {
+				DAMAGE_CAP_REENTRY.add(entity.getUUID());
+				try {
+					entity.hurtServer(level, source, amount * 0.33F);
+				} finally {
+					DAMAGE_CAP_REENTRY.remove(entity.getUUID());
+				}
+				return false;
+			}
+			if (BossController.isGenerator(entity)
+					&& amount > entity.getMaxHealth() / 5.0F
+					&& entity.level() instanceof ServerLevel level) {
+				DAMAGE_CAP_REENTRY.add(entity.getUUID());
+				try {
+					entity.hurtServer(level, source, entity.getMaxHealth() / 5.0F);
+				} finally {
+					DAMAGE_CAP_REENTRY.remove(entity.getUUID());
+				}
 				return false;
 			}
 			if (BossController.isAerialBoss(entity)
@@ -121,6 +221,11 @@ public final class PurgeManager {
 						.then(literal("rank").executes(context -> showRank(context.getSource().getPlayerOrException())))
 						.then(literal("contribution").executes(context -> showContribution(context.getSource().getPlayerOrException())))
 						.then(literal("blueprints").executes(context -> showBlueprints(context.getSource().getPlayerOrException())))
+						.then(literal("debug")
+								.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+								.then(literal("day").then(argument("day", IntegerArgumentType.integer(1))
+										.executes(context -> debugDay(context.getSource(),
+												IntegerArgumentType.getInteger(context, "day"))))))
 						.then(literal("stop")
 								.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 								.executes(context -> stop(context.getSource().getLevel())))));
@@ -177,6 +282,7 @@ public final class PurgeManager {
 	}
 
 	private static void tick(MinecraftServer server) {
+		LassoToss.tick(server);
 		PurgeWorldData data = PurgeWorldData.get(server.overworld());
 		List<ServerPlayer> players = server.getPlayerList().getPlayers();
 		if (server.overworld().getGameTime() % 20 == 0) {
@@ -198,9 +304,13 @@ public final class PurgeManager {
 			}
 		}
 		for (ServerLevel level : server.getAllLevels()) {
+			if (level.getGameTime() % 20 == 0) {
+				ScarecrowTurretItem.tick(level);
+			}
 			PurgeUnits.tickNaturalWarriors(level, players);
 			PurgeUnits.tickGigaChickens(level, players);
 			PurgeUnits.tickGoldenEggLayers(level, players);
+			PurgeUnits.tickCoopConstruction(level, players, data);
 		}
 		if (server.overworld().getGameTime() % 20 == 0) {
 			for (ServerPlayer player : players) {
@@ -397,6 +507,9 @@ public final class PurgeManager {
 			return;
 		}
 		if (PurgeUnits.isFinalBoss(dead)) {
+			if (PurgeUnits.isBoss(dead) && level.getRandom().nextFloat() < 0.1F) {
+				PurgeUnits.drop(level, dead.position(), ModItems.LASSO, 1);
+			}
 			boolean anotherBossAlive = false;
 			for (ServerLevel serverLevel : level.getServer().getAllLevels()) {
 				for (Entity entity : serverLevel.getAllEntities()) {
@@ -456,6 +569,10 @@ public final class PurgeManager {
 			if (data.learnBlueprint(player.getUUID().toString(), role)) {
 				player.sendSystemMessage(Component.literal("Blueprint learned: " + role + " chicken."));
 				unlockBlueprintRecipes(player, role);
+				if (role.equals("walker")) {
+					player.sendSystemMessage(Component.literal(
+							"Walker blueprint learned: the Flockguard Sigil recipe is now available."));
+				}
 			}
 			player.giveExperiencePoints(2 + data.threat());
 		}
@@ -469,7 +586,8 @@ public final class PurgeManager {
 			case "drone", "gunship" -> new String[]{"flak_cannon", "emp_disruptor"};
 			case "medic" -> new String[]{"medic_syringe"};
 			case "riot" -> new String[]{"riot_helmet", "cluck_shield"};
-			case "tank", "walker" -> new String[]{"reactive_plating", "bunker_block"};
+			case "tank" -> new String[]{"reactive_plating", "bunker_block"};
+			case "walker" -> new String[]{"reactive_plating", "bunker_block", "flockguard_sigil"};
 			case "general" -> new String[]{"cluck_radar", "signal_scrambler"};
 			case "sergeant" -> new String[]{"rooster_spear", "feather_cloak"};
 			case "militia" -> new String[]{"beak_47"};
@@ -612,6 +730,9 @@ public final class PurgeManager {
 				new ItemStack(ModItems.SCRAP_CIRCUIT, 3), 8, 8, 0.05F));
 		trader.getOffers().add(new MerchantOffer(new ItemCost(ModItems.WAR_FEATHER, 16),
 				new ItemStack(ModItems.GENERALS_PLUME), 4, 12, 0.05F));
+		trader.getOffers().add(new MerchantOffer(new ItemCost(ModItems.WAR_FEATHER, 12),
+				java.util.Optional.of(new ItemCost(ModItems.SCRAP_PLATE, 8)),
+				new ItemStack(ModItems.LASSO), 1, 16, 0.05F));
 		return level.addFreshEntity(trader);
 	}
 
@@ -678,6 +799,23 @@ public final class PurgeManager {
 		return 1;
 	}
 
+	private static int debugDay(net.minecraft.commands.CommandSourceStack source, int day) {
+		PurgeWorldData data = PurgeWorldData.get(source.getLevel());
+		if (!data.isActive()) {
+			source.sendFailure(Component.literal("Cannot jump days because no Purge is active."));
+			return 0;
+		}
+		if (!data.jumpToDay(day)) {
+			source.sendFailure(Component.literal("Day must be between 1 and " + data.eventDays() + "."));
+			return 0;
+		}
+		displayedDay = day;
+		updateBossBar(source.getServer(), data);
+		source.sendSuccess(() -> Component.literal("Jumped to Purge Day " + day + " of "
+				+ data.eventDays() + "."), false);
+		return 1;
+	}
+
 	private static int stop(ServerLevel level) {
 		PurgeWorldData data = PurgeWorldData.get(level);
 		if (!data.isActive()) {
@@ -727,9 +865,19 @@ public final class PurgeManager {
 		for (ServerLevel level : server.getAllLevels()) {
 			for (Entity entity : level.getAllEntities()) {
 				if (entity instanceof LivingEntity living && PurgeUnits.isBoss(entity)) {
-					ravagerHealth = new RavagerHealth(living.getHealth(), living.getMaxHealth());
+					List<? extends LivingEntity> generators = BossController.shieldGenerators(entity);
+					int resistance = BossController.shieldResistanceAmplifier(generators);
+					float shieldHealth = 0;
+					float shieldMax = 0;
+					if (!generators.isEmpty()) {
+						LivingEntity shield = generators.getFirst();
+						shieldHealth = shield.getHealth();
+						shieldMax = shield.getMaxHealth();
+					}
+					ravagerHealth = new RavagerHealth(living.getHealth(), living.getMaxHealth(),
+							resistance, shieldHealth, shieldMax);
 				} else if (entity instanceof LivingEntity living && BossController.isAerialBoss(entity)) {
-					aerialHealth = new RavagerHealth(living.getHealth(), living.getMaxHealth());
+					aerialHealth = new RavagerHealth(living.getHealth(), living.getMaxHealth(), -1, 0, 0);
 				}
 			}
 		}
@@ -738,7 +886,11 @@ public final class PurgeManager {
 				overlordHealthBar = new ServerBossEvent(UUID.randomUUID(), Component.empty(),
 						BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.PROGRESS);
 			}
-			overlordHealthBar.setName(Component.literal("The Overlord - "
+			String shield = ravagerHealth.resistance() < 0 ? ""
+					: " [SHIELD: " + (int) Math.ceil(100.0 * ravagerHealth.shieldHealth()
+					/ Math.max(1.0F, ravagerHealth.shieldMaxHealth()))
+					+ "% - Res " + BossController.toRoman(ravagerHealth.resistance() + 1) + "]";
+			overlordHealthBar.setName(Component.literal("The Overlord" + shield + " - "
 					+ Math.ceil(ravagerHealth.health()) + " / " + Math.ceil(ravagerHealth.maxHealth())));
 			overlordHealthBar.setProgress(progress(ravagerHealth.health(), ravagerHealth.maxHealth()));
 			addPlayers(overlordHealthBar, server);
@@ -761,7 +913,8 @@ public final class PurgeManager {
 		}
 	}
 
-	private record RavagerHealth(float health, float maxHealth) {
+	private record RavagerHealth(float health, float maxHealth, int resistance,
+			float shieldHealth, float shieldMaxHealth) {
 	}
 
 	private static float progress(float health, float maxHealth) {

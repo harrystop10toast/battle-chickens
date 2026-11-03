@@ -1,6 +1,12 @@
 {
-  "variants": {
-    "cracked=false": {"model": "battle-chickens:block/bunker_block"},
-    "cracked=true": {"model": "battle-chickens:block/bunker_block_cracked"}
-  }
+  "multipart": [
+    {
+      "when": {"cracked": "false"},
+      "apply": {"model": "battle-chickens:block/bunker_block"}
+    },
+    {
+      "when": {"cracked": "true"},
+      "apply": {"model": "battle-chickens:block/bunker_block_cracked"}
+    }
+  ]
 }

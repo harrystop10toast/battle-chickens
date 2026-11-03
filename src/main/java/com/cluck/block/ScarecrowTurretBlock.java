@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -19,6 +20,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 public final class ScarecrowTurretBlock extends Block {
 	public static final IntegerProperty AMMO = IntegerProperty.create("ammo", 0, 64);
@@ -45,20 +48,34 @@ public final class ScarecrowTurretBlock extends Block {
 
 	@Override
 	public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+		if (!state.is(this)) {
+			return;
+		}
 		if (state.getValue(AMMO) <= 0) {
 			level.scheduleTick(pos, this, 100);
 			return;
 		}
+		Vec3 origin = Vec3.atCenterOf(pos).add(0, 0.35, 0);
 		Chicken target = level.getEntitiesOfClass(Chicken.class, new AABB(pos).inflate(12),
-						PurgeUnits::isUnit).stream()
+						chicken -> (PurgeUnits.isUnit(chicken) || PurgeUnits.isWarrior(chicken))
+								&& level.clip(new ClipContext(origin, chicken.getBoundingBox().getCenter(),
+										ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, chicken))
+										.getType() == HitResult.Type.MISS).stream()
 				.min(java.util.Comparator.comparingDouble(chicken -> chicken.distanceToSqr(
 						pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)))
 				.orElse(null);
 		if (target != null) {
-			target.hurtServer(level, level.damageSources().magic(), 3);
+			Vec3 destination = target.getBoundingBox().getCenter();
+			Vec3 direction = destination.subtract(origin);
+			double distance = direction.length();
+			Vec3 step = direction.normalize().scale(0.75);
+			for (double traveled = 0; traveled < distance; traveled += 0.75) {
+				Vec3 point = origin.add(step.scale(traveled / 0.75));
+				level.sendParticles(ParticleTypes.CRIT, point.x, point.y, point.z,
+						1, 0.02, 0.02, 0.02, 0);
+			}
+			target.hurtServer(level, level.damageSources().arrow(null, null), 5);
 			level.setBlockAndUpdate(pos, state.setValue(AMMO, state.getValue(AMMO) - 1));
-			level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 0.6,
-					target.getZ(), 3, 0.1, 0.15, 0.1, 0.03);
 		}
 		level.scheduleTick(pos, this, 20);
 	}

@@ -29,6 +29,7 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 	private static final float DIRECT_DAMAGE = 28;
 	private static final float SPLASH_DAMAGE = 10;
 	private static final double SPLASH_RADIUS = 3.5;
+	private BlockPos blockImpact;
 
 	public PurgeRocketEntity(Level level, LivingEntity shooter) {
 		this(level, shooter, shooter.getLookAngle());
@@ -55,6 +56,7 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 	@Override
 	protected void onHitBlock(BlockHitResult hit) {
 		if (level() instanceof ServerLevel serverLevel) {
+			blockImpact = hit.getBlockPos();
 			detonate(serverLevel, hit.getLocation(), null);
 		} else {
 			discard();
@@ -64,23 +66,55 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 	private void detonate(ServerLevel level, Vec3 impact, Entity directHit) {
 		Entity owner = getOwner();
 		boolean bossRocket = PurgeUnits.isBoss(owner) || BossController.isAerialBoss(owner);
+		boolean bunkerImpact = blockImpact != null
+				&& level.getBlockState(blockImpact).getBlock() instanceof BunkerBlock;
+		if (bunkerImpact) {
+			BunkerBlock.handleDestructionAttempt(
+					null, level, blockImpact, owner);
+		}
 		double blastRadius = bossRocket ? 5.5 : SPLASH_RADIUS;
 		DamageSourceFactory damageSourceFactory = new DamageSourceFactory(level, this, owner);
 		AABB blast = new AABB(impact, impact).inflate(blastRadius);
-		ServerPlayer reflector = null;
-		float reflectedDamage = 0;
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, blast, LivingEntity::isAlive)) {
-			if (target == owner || (PurgeUnits.isPurgeAlly(owner) && PurgeUnits.isPurgeAlly(target))) {
+			if (bunkerImpact) {
 				continue;
+			}
+			if (target == owner) {
+				continue;
+			}
+			if (target == directHit) {
+				if (!(owner instanceof LivingEntity shooter)
+						|| !PurgeUnits.hasClearAttackPath(level, shooter, target)) {
+					continue;
+				}
+			} else if (!PurgeUnits.hasBlastExposure(level, impact, target)) {
+				continue;
+			}
+			if (BossController.isGenerator(target) && PurgeUnits.isPurgeAlly(owner)) {
+				continue;
+			}
+			if (PurgeUnits.isPurgeAlly(owner) && PurgeUnits.isPurgeAlly(target)) {
+				boolean ownerIsBoss = PurgeUnits.isBoss(owner) || BossController.isAerialBoss(owner);
+				boolean ownerIsChicken = PurgeUnits.isChickenAlly(owner);
+				boolean targetIsBoss = PurgeUnits.isBoss(target) || BossController.isAerialBoss(target);
+				boolean targetIsChicken = PurgeUnits.isChickenAlly(target);
+				if (!(ownerIsBoss && targetIsChicken) && !(ownerIsChicken && targetIsBoss)) {
+					continue;
+				}
 			}
 			float damage = target == directHit
 					? (bossRocket ? 58 : DIRECT_DAMAGE)
 					: (bossRocket ? 20 : SPLASH_DAMAGE);
-			if (target instanceof ServerPlayer player && owner instanceof LivingEntity
-					&& !(owner instanceof ServerPlayer) && player.getOffhandItem().is(ModItems.CLUCK_SHIELD)) {
-				reflector = player;
-				reflectedDamage = Math.max(reflectedDamage, damage * 0.5F);
-				continue;
+			if (target == directHit && target instanceof ServerPlayer player
+					&& owner instanceof LivingEntity livingOwner && !(owner instanceof ServerPlayer)
+					&& player.getOffhandItem().is(ModItems.CLUCK_SHIELD)) {
+				Vec3 reflectedDirection = livingOwner.position().subtract(player.getEyePosition()).normalize();
+				PurgeRocketEntity reflectedRocket = new PurgeRocketEntity(level, player, reflectedDirection);
+				if (level.addFreshEntity(reflectedRocket)) {
+					level.sendParticles(ParticleTypes.CRIT, player.getX(), player.getEyeY(), player.getZ(),
+							10, 0.25, 0.25, 0.25, 0.12);
+					continue;
+				}
 			}
 			if (target instanceof ServerPlayer && owner instanceof ServerPlayer) {
 				damage *= BattleChickens.CONFIG.peckzookaPvpDamageMultiplier();
@@ -95,9 +129,6 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 				target.hurtServer(level, damageSourceFactory.create(), damage);
 			}
 		}
-		if (reflector != null && owner instanceof LivingEntity livingOwner && livingOwner.isAlive()) {
-			livingOwner.hurtServer(level, level.damageSources().playerAttack(reflector), reflectedDamage);
-		}
 		if (directHit == null && owner instanceof net.minecraft.world.entity.animal.chicken.Chicken) {
 			for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
 					new AABB(impact, impact).inflate(8))) {
@@ -109,7 +140,7 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 			}
 		}
 
-		if (level.getGameRules().get(GameRules.MOB_GRIEFING)) {
+		if (!bunkerImpact && level.getGameRules().get(GameRules.MOB_GRIEFING)) {
 			int radius = owner instanceof ServerPlayer
 					? BattleChickens.CONFIG.rocketBlockRadius()
 					: bossRocket
@@ -137,19 +168,11 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 						continue;
 					}
 					BlockPos pos = center.offset(x, y, z);
-					if (level.getBlockState(pos).isAir()) {
-						continue;
-					}
-					if (BunkerBlock.handleRocketHit(player, level, pos, owner)) {
-						continue;
-					}
-					if (player != null) {
-						player.gameMode.destroyBlock(pos);
-					} else {
-						boolean dropItems = !PurgeUnits.isBoss(owner) && !BossController.isAerialBoss(owner)
-								&& !PurgeUnits.isUnit(owner);
-						level.destroyBlock(pos, dropItems, owner);
-					}
+					boolean dropItems = player != null
+							|| !PurgeUnits.isBoss(owner) && !BossController.isAerialBoss(owner)
+									&& !PurgeUnits.isUnit(owner);
+					BunkerBlock.handleBlastDestructionAttempt(
+							player, level, impact, pos, owner, true, dropItems);
 				}
 			}
 		}

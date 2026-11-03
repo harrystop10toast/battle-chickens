@@ -61,6 +61,9 @@ public final class PurgeOutposts {
 				chest.setItem(6, new ItemStack(ModItems.EMP_DISRUPTOR));
 				chest.setItem(7, new ItemStack(ModItems.SIGNAL_SCRAMBLER));
 			}
+			if (level.getRandom().nextFloat() < 0.1F) {
+				chest.setItem(8, new ItemStack(ModItems.LASSO));
+			}
 			chest.setChanged();
 		}
 

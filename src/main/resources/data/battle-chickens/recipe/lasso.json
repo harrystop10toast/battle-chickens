@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["SFS", " F ", "PIP"],
+  "key": {
+    "S": "minecraft:string",
+    "F": "battle-chickens:war_feather",
+    "P": "battle-chickens:scrap_plate",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "battle-chickens:lasso",
+    "count": 1
+  }
+}

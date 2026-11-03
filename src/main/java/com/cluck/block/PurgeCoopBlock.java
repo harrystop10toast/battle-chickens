@@ -14,10 +14,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 
 public final class PurgeCoopBlock extends Block {
+	public static final BooleanProperty PLAYER_PLACED = BooleanProperty.create("player_placed");
+
 	public enum Mode {
 		RADAR,
 		JAMMER,
@@ -29,6 +33,12 @@ public final class PurgeCoopBlock extends Block {
 	public PurgeCoopBlock(BlockBehaviour.Properties properties, Mode mode) {
 		super(properties);
 		this.mode = mode;
+		registerDefaultState(defaultBlockState().setValue(PLAYER_PLACED, false));
+	}
+
+	@Override
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(PLAYER_PLACED);
 	}
 
 	public Mode mode() {
@@ -41,6 +51,10 @@ public final class PurgeCoopBlock extends Block {
 							net.minecraft.world.item.ItemStack stack) {
 		super.setPlacedBy(level, pos, state, placer, stack);
 		if (level instanceof ServerLevel serverLevel) {
+			if (placer instanceof Player) {
+				serverLevel.setBlockAndUpdate(pos, serverLevel.getBlockState(pos)
+						.setValue(PLAYER_PLACED, true));
+			}
 			startTicker(serverLevel, pos);
 		}
 	}
@@ -51,16 +65,59 @@ public final class PurgeCoopBlock extends Block {
 
 	@Override
 	public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-		if (mode != Mode.JAMMER) {
-			int radius = mode == Mode.RADAR ? 24 : 12;
-			for (Chicken chicken : level.getEntitiesOfClass(Chicken.class, new AABB(pos).inflate(radius),
-					PurgeUnits::isUnit)) {
-				chicken.addEffect(new MobEffectInstance(
-						mode == Mode.RADAR ? MobEffects.STRENGTH : MobEffects.RESISTANCE,
-						80, 0, true, false));
+		if (!state.is(this)) {
+			return;
+		}
+		boolean playerPlaced = state.getValue(PLAYER_PLACED);
+		int radius = mode == Mode.RADAR ? 24 : 12;
+		for (Chicken chicken : level.getEntitiesOfClass(Chicken.class, new AABB(pos).inflate(radius),
+				entity -> PurgeUnits.isUnit(entity) || PurgeUnits.isWarrior(entity))) {
+			switch (mode) {
+				case RADAR -> {
+					if (playerPlaced) {
+						chicken.addEffect(new MobEffectInstance(MobEffects.GLOWING, 80, 0, true, false));
+					} else {
+						chicken.addEffect(new MobEffectInstance(MobEffects.STRENGTH, 80, 0, true, false));
+					}
+				}
+				case JAMMER -> {
+					if (playerPlaced) {
+						chicken.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 60, 0, true, false));
+						chicken.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 0, true, false));
+					} else {
+						chicken.addEffect(new MobEffectInstance(MobEffects.SPEED, 60, 0, true, false));
+						chicken.addEffect(new MobEffectInstance(MobEffects.STRENGTH, 60, 0, true, false));
+					}
+				}
+				case SHIELD -> chicken.addEffect(new MobEffectInstance(
+						playerPlaced ? MobEffects.WEAKNESS : MobEffects.RESISTANCE,
+						60, 0, true, false));
 			}
 		}
-		level.scheduleTick(pos, this, mode == Mode.RADAR ? 80 : 40);
+		for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
+				new AABB(pos).inflate(radius), ServerPlayer::isAlive)) {
+			switch (mode) {
+				case RADAR -> {
+					if (playerPlaced) {
+						player.addEffect(new MobEffectInstance(MobEffects.SPEED, 80, 0, true, false));
+					}
+				}
+				case JAMMER -> {
+					if (!playerPlaced) {
+						player.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 60, 0, true, false));
+						player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 0, true, false));
+					}
+				}
+				case SHIELD -> {
+					if (playerPlaced) {
+						player.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 60, 0, true, false));
+					} else {
+						player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 0, true, false));
+					}
+				}
+			}
+		}
+		level.scheduleTick(pos, this, mode == Mode.RADAR ? 60 : 40);
 	}
 
 	@Override
@@ -82,8 +139,9 @@ public final class PurgeCoopBlock extends Block {
 					if (x * x + y * y + z * z > 12 * 12) {
 						continue;
 					}
-					if (level.getBlockState(center.offset(x, y, z)).getBlock() instanceof PurgeCoopBlock coop
-							&& coop.mode == Mode.JAMMER) {
+					BlockState state = level.getBlockState(center.offset(x, y, z));
+					if (state.getBlock() instanceof PurgeCoopBlock coop
+							&& coop.mode == Mode.JAMMER && !state.getValue(PLAYER_PLACED)) {
 						return true;
 					}
 				}

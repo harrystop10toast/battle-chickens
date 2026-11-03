@@ -3,7 +3,6 @@ package com.cluck.item;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -28,10 +27,46 @@ public final class RationsCrateItem extends Item {
 		if (!serverPlayer.getAbilities().instabuild) {
 			serverPlayer.getItemInHand(hand).shrink(1);
 		}
-		give(serverPlayer, new ItemStack(Items.COOKED_CHICKEN, 8));
-		give(serverPlayer, new ItemStack(Items.ARROW, 16));
-		give(serverPlayer, new ItemStack(ModItems.DUD_ROCKET, 2));
-		serverPlayer.sendSystemMessage(net.minecraft.network.chat.Component.literal("Rations supplied: food, arrows, and Dud Rockets."));
+		int kit = serverPlayer.getRandom().nextInt(6);
+		switch (kit) {
+			case 0 -> {
+				give(serverPlayer, new ItemStack(Items.COOKED_CHICKEN, 12));
+				give(serverPlayer, new ItemStack(Items.GOLDEN_CARROT, 4));
+			}
+			case 1 -> {
+				give(serverPlayer, new ItemStack(Items.ARROW, 32));
+				give(serverPlayer, new ItemStack(Items.COOKED_CHICKEN, 6));
+			}
+			case 2 -> {
+				give(serverPlayer, new ItemStack(ModItems.DUD_ROCKET, 3));
+				give(serverPlayer, new ItemStack(ModItems.GUNPOWDER_POUCH, 4));
+			}
+			case 3 -> {
+				give(serverPlayer, new ItemStack(Items.GOLDEN_APPLE, 2));
+				give(serverPlayer, new ItemStack(Items.COOKED_CHICKEN, 6));
+			}
+			case 4 -> {
+				give(serverPlayer, new ItemStack(ModItems.WAR_FEATHER, 5));
+				give(serverPlayer, new ItemStack(ModItems.SCRAP_PLATE, 3));
+			}
+			default -> {
+				give(serverPlayer, new ItemStack(Items.IRON_INGOT, 8));
+				give(serverPlayer, new ItemStack(Items.COOKED_CHICKEN, 6));
+			}
+		}
+		boolean foundLasso = serverPlayer.getRandom().nextInt(30) == 0;
+		if (foundLasso) {
+			give(serverPlayer, new ItemStack(ModItems.LASSO));
+		}
+		serverPlayer.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+				"Rations supplied: " + switch (kit) {
+					case 0 -> "field provisions.";
+					case 1 -> "archer's ammunition.";
+					case 2 -> "demolition supplies.";
+					case 3 -> "emergency medical supplies.";
+					case 4 -> "salvaged materials.";
+					default -> "reinforcement materials.";
+				} + (foundLasso ? " A rare Lasso was tucked inside!" : "")));
 		return InteractionResult.SUCCESS_SERVER;
 	}
 

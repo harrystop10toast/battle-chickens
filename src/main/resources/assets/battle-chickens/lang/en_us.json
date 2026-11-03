@@ -39,6 +39,9 @@
   "item.battle-chickens.cluck_radar": "Cluck Radar",
   "item.battle-chickens.signal_scrambler": "Signal Scrambler",
   "item.battle-chickens.golden_egg": "Golden Egg",
+  "item.battle-chickens.generator_core": "Generator Core",
+  "item.battle-chickens.flockguard_sigil": "Flockguard Sigil",
+  "item.battle-chickens.lasso": "Lasso",
   "block.battle-chickens.scrap_bench": "Scrap Bench",
   "block.battle-chickens.bunker_block": "Bunker Block",
   "block.battle-chickens.radar_coop": "Radar Coop",
@@ -64,5 +67,240 @@
   "entity.battle-chickens.summoned_chicken": "Summoned Chicken",
   "entity.battle-chickens.outpost_guard": "Outpost Guard",
   "entity.battle-chickens.giga_chicken": "Giga Chicken",
-  "entity.battle-chickens.shield_generator_golem": "Shield Generator Golem"
+  "entity.battle-chickens.shield_generator_golem": "Shield Generator Golem",
+
+  "tooltip.battle-chickens.ominous_egg.tag": "Event Trigger",
+  "tooltip.battle-chickens.ominous_egg.desc": "Initiates the 7-day Chicken Purge event at Threat Level I.",
+  "tooltip.battle-chickens.ominous_egg.usage": "Right-click on the ground to begin the apocalypse.",
+  "tooltip.battle-chickens.ominous_egg.stat": "Standard Difficulty | Meltdown on Day 7",
+
+  "tooltip.battle-chickens.gilded_ominous_egg.tag": "Event Trigger",
+  "tooltip.battle-chickens.gilded_ominous_egg.desc": "Initiates the Chicken Purge at Threat Level II.",
+  "tooltip.battle-chickens.gilded_ominous_egg.usage": "Right-click to start. Spawns tougher military chicken squads.",
+  "tooltip.battle-chickens.gilded_ominous_egg.stat": "Threat II | +20% Enemy Health & Salvage",
+
+  "tooltip.battle-chickens.cursed_ominous_egg.tag": "Event Trigger",
+  "tooltip.battle-chickens.cursed_ominous_egg.desc": "Initiates the Chicken Purge at Threat Level III.",
+  "tooltip.battle-chickens.cursed_ominous_egg.usage": "Right-click to start. Victory unlocks the Veteran Rooster trader.",
+  "tooltip.battle-chickens.cursed_ominous_egg.stat": "Threat III | Gunships spawn Day 4+",
+
+  "tooltip.battle-chickens.warlord_ominous_egg.tag": "Event Trigger",
+  "tooltip.battle-chickens.warlord_ominous_egg.desc": "Initiates the Chicken Purge at Threat Level IV (Hardcore).",
+  "tooltip.battle-chickens.warlord_ominous_egg.usage": "Right-click to start. Daily Rations Crates are disabled.",
+  "tooltip.battle-chickens.warlord_ominous_egg.stat": "Threat IV | Requires Rank III to craft",
+
+  "tooltip.battle-chickens.singularity_ominous_egg.tag": "Event Trigger",
+  "tooltip.battle-chickens.singularity_ominous_egg.desc": "Initiates the Chicken Purge at supreme Threat Level V.",
+  "tooltip.battle-chickens.singularity_ominous_egg.usage": "Right-click to start. The ultimate apocalyptic test of survival.",
+  "tooltip.battle-chickens.singularity_ominous_egg.stat": "Threat V | Maximum enemy stats & unlimited artillery",
+
+  "tooltip.battle-chickens.war_feather.tag": "Salvage Material",
+  "tooltip.battle-chickens.war_feather.desc": "Hardened military plumage collected from Purge chickens.",
+  "tooltip.battle-chickens.war_feather.usage": "Core ingredient for battle-tech weapons, armor, and gear.",
+  "tooltip.battle-chickens.war_feather.stat": "Dropped by hostile Purge chickens and outposts",
+
+  "tooltip.battle-chickens.scrap_plate.tag": "Salvage Material",
+  "tooltip.battle-chickens.scrap_plate.desc": "Heavy reinforced metal plating stripped from Purge armor.",
+  "tooltip.battle-chickens.scrap_plate.usage": "Used in crafting the Cluck Shield, Bunker Blocks, and tech upgrades.",
+  "tooltip.battle-chickens.scrap_plate.stat": "Dropped by Riot Chickens and Salvage Outposts",
+
+  "tooltip.battle-chickens.scrap_circuit.tag": "Tech Component",
+  "tooltip.battle-chickens.scrap_circuit.desc": "Salvaged microprocessor from specialized military units.",
+  "tooltip.battle-chickens.scrap_circuit.usage": "Used to craft Cluck Radar, Signal Scramblers, and Defense Cores.",
+  "tooltip.battle-chickens.scrap_circuit.stat": "Dropped by RPG Chickens, Snipers, and Medics",
+
+  "tooltip.battle-chickens.rocket_casing.tag": "Heavy Ordinance",
+  "tooltip.battle-chickens.rocket_casing.desc": "Empty propulsion shell engineered for high-yield rockets.",
+  "tooltip.battle-chickens.rocket_casing.usage": "Craft into Dud Rockets using gunpowder and paper.",
+  "tooltip.battle-chickens.rocket_casing.stat": "Ammunition component for the Peckzooka",
+
+  "tooltip.battle-chickens.gunpowder_pouch.tag": "Ammunition & Fuel",
+  "tooltip.battle-chickens.gunpowder_pouch.desc": "Concentrated volatile gunpowder sealed in a reinforced pouch.",
+  "tooltip.battle-chickens.gunpowder_pouch.usage": "Fuel for the Flame Fryer and explosive crafting.",
+  "tooltip.battle-chickens.gunpowder_pouch.stat": "Dropped by Grenadier Hens",
+
+  "tooltip.battle-chickens.golden_feather.tag": "Prestige Material",
+  "tooltip.battle-chickens.golden_feather.desc": "Shimmering golden feather recovered from elite Purge commanders.",
+  "tooltip.battle-chickens.golden_feather.usage": "High-tier crafting currency used to trade with the Veteran Rooster.",
+  "tooltip.battle-chickens.golden_feather.stat": "Dropped by Purge Generals and Bosses",
+
+  "tooltip.battle-chickens.generals_plume.tag": "General Trophy / Helmet",
+  "tooltip.battle-chickens.generals_plume.desc": "Imposing crest awarded for slaying a Purge General.",
+  "tooltip.battle-chickens.generals_plume.usage": "Wear as a helmet to gain Strength near Purge enemies, or display in a frame.",
+  "tooltip.battle-chickens.generals_plume.stat": "Grants Strength I when Purge chickens are within 16 blocks",
+
+  "tooltip.battle-chickens.overlord_shard.tag": "Boss Essence",
+  "tooltip.battle-chickens.overlord_shard.desc": "Resonating crystalline fragment harvested from the Chicken Overlord.",
+  "tooltip.battle-chickens.overlord_shard.usage": "Used to craft Singularity Ominous Eggs and master-tier rewards.",
+  "tooltip.battle-chickens.overlord_shard.stat": "Guaranteed drop from defeating the Day 7 Overlord",
+
+  "tooltip.battle-chickens.overlord_core.tag": "Boss Artifact",
+  "tooltip.battle-chickens.overlord_core.desc": "Supercharged mechanical power core of the Chicken Overlord.",
+  "tooltip.battle-chickens.overlord_core.usage": "Right-click to call an Orbital Strike. Sneak-Right-Click a block to deploy a Defense Core.",
+  "tooltip.battle-chickens.overlord_core.stat": "Orbital Strike: Massive Area Blast | Defense Core: Permanent Area Shield",
+
+  "tooltip.battle-chickens.scarecrow_turret.tag": "Defense Structure",
+  "tooltip.battle-chickens.scarecrow_turret.desc": "Armor-stand sentry dressed as a pumpkin-headed crossbow scarecrow.",
+  "tooltip.battle-chickens.scarecrow_turret.usage": "Place on solid ground. Right-click it with wheat seeds to reload (16 shots/seed).",
+  "tooltip.battle-chickens.scarecrow_turret.stat": "Automatically zaps hostile Purge chickens | 64 rounds | 16-block range",
+
+  "tooltip.battle-chickens.defense_core.tag": "Defense Structure",
+  "tooltip.battle-chickens.defense_core.desc": "Fortified beacon that projects a protective aura and repels Purge units.",
+  "tooltip.battle-chickens.defense_core.usage": "Place to grant nearby players Resistance and zap approaching chickens.",
+  "tooltip.battle-chickens.defense_core.stat": "Permanent defensive installation",
+
+  "tooltip.battle-chickens.radar_coop.tag": "Outpost Structure",
+  "tooltip.battle-chickens.radar_coop.desc": "Recon station that marks nearby hostiles or reveals nearby players.",
+  "tooltip.battle-chickens.radar_coop.usage": "Purge-placed: grants nearby Purge chickens Strength. Player-placed: grants Speed and reveals Purge chickens.",
+  "tooltip.battle-chickens.radar_coop.stat": "Effect radius: 24 blocks",
+
+  "tooltip.battle-chickens.jammer_coop.tag": "Outpost Structure",
+  "tooltip.battle-chickens.jammer_coop.desc": "Signal jammer that interferes with enemies in range.",
+  "tooltip.battle-chickens.jammer_coop.usage": "Purge-placed: buffs chickens, weakens players, and jams Cluck Radar. Player-placed: slows and weakens Purge chickens.",
+  "tooltip.battle-chickens.jammer_coop.stat": "Effect radius: 12 blocks",
+
+  "tooltip.battle-chickens.shield_coop.tag": "Outpost Structure",
+  "tooltip.battle-chickens.shield_coop.desc": "Defensive field generator that protects its side and weakens enemies.",
+  "tooltip.battle-chickens.shield_coop.usage": "Purge-placed: buffs chickens and weakens players. Player-placed: grants Resistance and weakens Purge chickens.",
+  "tooltip.battle-chickens.shield_coop.stat": "Effect radius: 12 blocks",
+
+  "tooltip.battle-chickens.nemesis_trophy.tag": "Commemorative Trophy",
+  "tooltip.battle-chickens.nemesis_trophy.desc": "Monument of triumph carved after slaying a persistent Nemesis Chicken.",
+  "tooltip.battle-chickens.nemesis_trophy.usage": "Place in an item frame or display on a wall as a badge of honor.",
+  "tooltip.battle-chickens.nemesis_trophy.stat": "Inscribed with the Nemesis chicken's rank and kill count",
+
+  "tooltip.battle-chickens.overlord_crown.tag": "Boss Relic / Helmet",
+  "tooltip.battle-chickens.overlord_crown.desc": "The supreme gilded crown of the Chicken Overlord.",
+  "tooltip.battle-chickens.overlord_crown.usage": "Wear as a helmet to project a Strength aura to nearby allies, or display in a frame.",
+  "tooltip.battle-chickens.overlord_crown.stat": "Aura: Strength I for all allies within 12 blocks",
+
+  "tooltip.battle-chickens.rations_crate.tag": "Survival Supply",
+  "tooltip.battle-chickens.rations_crate.desc": "Emergency airdrop supply crate delivered at each Purge dawn.",
+  "tooltip.battle-chickens.rations_crate.usage": "Right-click to open and unpack rations, medical supplies, and ammo.",
+  "tooltip.battle-chickens.rations_crate.stat": "Not delivered during Threat IV/V or Hardcore mode",
+
+  "tooltip.battle-chickens.dud_rocket.tag": "Heavy Ammunition",
+  "tooltip.battle-chickens.dud_rocket.desc": "Stabilized explosive rocket projectile.",
+  "tooltip.battle-chickens.dud_rocket.usage": "Ammunition consumed when firing the Captured Peckzooka.",
+  "tooltip.battle-chickens.dud_rocket.stat": "Deals heavy direct and splash explosive damage",
+
+  "tooltip.battle-chickens.purge_grenade.tag": "Thrown Explosive",
+  "tooltip.battle-chickens.purge_grenade.desc": "Tactical fragmentation grenade with a 2-second fuse.",
+  "tooltip.battle-chickens.purge_grenade.usage": "Right-click to lob into enemy squads. Explodes on a timed fuse.",
+  "tooltip.battle-chickens.purge_grenade.stat": "Blast Radius: 3.5 Blocks | Deals high shrapnel damage",
+
+  "tooltip.battle-chickens.flockwar_horn.tag": "Battle Utility",
+  "tooltip.battle-chickens.flockwar_horn.desc": "Ancient warhorn carved from hardened bone and horn.",
+  "tooltip.battle-chickens.flockwar_horn.usage": "Right-click to sound the horn and rally nearby allies.",
+  "tooltip.battle-chickens.flockwar_horn.stat": "Grants Speed II and Haste II to nearby players for 30s | 60s CD",
+
+  "tooltip.battle-chickens.captured_peckzooka.tag": "Heavy Weapon",
+  "tooltip.battle-chickens.captured_peckzooka.desc": "Shoulder-mounted artillery cannon captured from RPG Chickens.",
+  "tooltip.battle-chickens.captured_peckzooka.usage": "Right-click to launch high-explosive Dud Rockets.",
+  "tooltip.battle-chickens.captured_peckzooka.stat": "Requires: Dud Rockets | 120 Durability | 4s Reload",
+
+  "tooltip.battle-chickens.cluck_shield.tag": "Defensive Shield",
+  "tooltip.battle-chickens.cluck_shield.desc": "Reinforced blast shield forged with Scrap Plates.",
+  "tooltip.battle-chickens.cluck_shield.usage": "Hold in either hand to reduce explosion damage, resist knockback, and reflect direct rockets.",
+  "tooltip.battle-chickens.cluck_shield.stat": "50% less explosion damage | 90% knockback resistance",
+
+  "tooltip.battle-chickens.feather_cloak.tag": "Tactical Gear",
+  "tooltip.battle-chickens.feather_cloak.desc": "Lightweight aerodynamic cape spun from war feathers.",
+  "tooltip.battle-chickens.feather_cloak.usage": "Hold or equip to gain Slow Falling and complete fall damage immunity.",
+  "tooltip.battle-chickens.feather_cloak.stat": "Negates 100% of fall damage while held or worn",
+
+  "tooltip.battle-chickens.emp_disruptor.tag": "Tactical Gadget",
+  "tooltip.battle-chickens.emp_disruptor.desc": "Electromagnetic pulse emitter tuned to Purge electronics.",
+  "tooltip.battle-chickens.emp_disruptor.usage": "Right-click to trigger an EMP shockwave around you.",
+  "tooltip.battle-chickens.emp_disruptor.stat": "Stuns nearby units for 5s & instantly dismantles Coops | 45s CD",
+
+  "tooltip.battle-chickens.egg_cannon.tag": "Heavy Weapon",
+  "tooltip.battle-chickens.egg_cannon.desc": "Pneumatic cannon that fires pressurized concussive egg rounds.",
+  "tooltip.battle-chickens.egg_cannon.usage": "Right-click with eggs in inventory to fire high-impact projectiles.",
+  "tooltip.battle-chickens.egg_cannon.stat": "Extreme knockback force against advancing swarms",
+
+  "tooltip.battle-chickens.flak_cannon.tag": "Anti-Air Weapon",
+  "tooltip.battle-chickens.flak_cannon.desc": "Short-barrel combat shotgun loaded with shrapnel pellets.",
+  "tooltip.battle-chickens.flak_cannon.usage": "Right-click to unleash a wide spray of anti-air shrapnel.",
+  "tooltip.battle-chickens.flak_cannon.stat": "Triple damage against airborne gunships and Phantoms",
+
+  "tooltip.battle-chickens.beak_47.tag": "Rapid-Fire Weapon",
+  "tooltip.battle-chickens.beak_47.desc": "High-cadence assault rifle chambered in wheat seeds.",
+  "tooltip.battle-chickens.beak_47.usage": "Hold right-click to unleash rapid seed bursts at targets.",
+  "tooltip.battle-chickens.beak_47.stat": "8 damage | 40-block range | Consumes wheat seeds",
+
+  "tooltip.battle-chickens.rooster_spear.tag": "Melee Weapon",
+  "tooltip.battle-chickens.rooster_spear.desc": "Long-reach halberd tipped with hardened war steel.",
+  "tooltip.battle-chickens.rooster_spear.usage": "Attack enemies from safety with extended reach.",
+  "tooltip.battle-chickens.rooster_spear.stat": "Reach: +2.0 Blocks | +50% Bonus damage to airborne enemies",
+
+  "tooltip.battle-chickens.flame_fryer.tag": "Incendiary Weapon",
+  "tooltip.battle-chickens.flame_fryer.desc": "Scorching flamethrower pressurized by Gunpowder Pouches.",
+  "tooltip.battle-chickens.flame_fryer.usage": "Hold right-click to project a continuous cone of searing flames.",
+  "tooltip.battle-chickens.flame_fryer.stat": "Consumes Gunpowder Pouches | Ignites targets",
+
+  "tooltip.battle-chickens.sniper_beak.tag": "Marksman Weapon",
+  "tooltip.battle-chickens.sniper_beak.desc": "Extreme-range precision rifle with an optical targeting scope.",
+  "tooltip.battle-chickens.sniper_beak.usage": "Right-click with arrows in inventory to fire high-velocity rounds.",
+  "tooltip.battle-chickens.sniper_beak.stat": "Effective Range: 96 Blocks | Armor-piercing damage",
+
+  "tooltip.battle-chickens.riot_helmet.tag": "Ballistic Armor",
+  "tooltip.battle-chickens.riot_helmet.desc": "Reinforced riot helmet with a heavy blast visor.",
+  "tooltip.battle-chickens.riot_helmet.usage": "Wear as helmet to deflect incoming frontal arrows and gain Resistance.",
+  "tooltip.battle-chickens.riot_helmet.stat": "Blocks 100% frontal projectile damage while guarding",
+
+  "tooltip.battle-chickens.reactive_plating.tag": "Armor Upgrade",
+  "tooltip.battle-chickens.reactive_plating.desc": "Explosion-dampening reactive composite armor.",
+  "tooltip.battle-chickens.reactive_plating.usage": "Keep anywhere in your inventory to dampen explosive blast damage.",
+  "tooltip.battle-chickens.reactive_plating.stat": "Passively reduces incoming explosive damage by 30%",
+
+  "tooltip.battle-chickens.medic_syringe.tag": "Tactical Medical",
+  "tooltip.battle-chickens.medic_syringe.desc": "Combat adrenaline injector salvaged from Medic Hens.",
+  "tooltip.battle-chickens.medic_syringe.usage": "Right-click to inject adrenaline and rapidly treat wounds.",
+  "tooltip.battle-chickens.medic_syringe.stat": "Instantly heals 6 HP + Regeneration II for 6s | Stack of 16",
+
+  "tooltip.battle-chickens.drumstick_of_valor.tag": "Legendary Ration",
+  "tooltip.battle-chickens.drumstick_of_valor.desc": "Deep-fried champion drumstick blessed with ferocious vigor.",
+  "tooltip.battle-chickens.drumstick_of_valor.usage": "Eat to satisfy all hunger and fortify your body for battle.",
+  "tooltip.battle-chickens.drumstick_of_valor.stat": "Restores full food + Absorption & Strength for 60s",
+
+  "tooltip.battle-chickens.cluck_radar.tag": "Recon Gadget",
+  "tooltip.battle-chickens.cluck_radar.desc": "Tactical biometric radar that detects Purge squad movements.",
+  "tooltip.battle-chickens.cluck_radar.usage": "Right-click to scan a 64-block perimeter for Purge hostiles.",
+  "tooltip.battle-chickens.cluck_radar.stat": "Reports nearby unit counts, roles, and distance in chat",
+
+  "tooltip.battle-chickens.signal_scrambler.tag": "Electronic Countermeasure",
+  "tooltip.battle-chickens.signal_scrambler.desc": "Portable broadcast scrambler that jams hostile targeting sensors.",
+  "tooltip.battle-chickens.signal_scrambler.usage": "Hold in hand to confuse enemy sniper lock-on and rocket tracking.",
+  "tooltip.battle-chickens.signal_scrambler.stat": "Prevents snipers and bosses from acquiring lock-on",
+
+  "tooltip.battle-chickens.golden_egg.tag": "Mythical Egg",
+  "tooltip.battle-chickens.golden_egg.desc": "Radiant golden egg laid by surviving chickens after the Overlord falls.",
+  "tooltip.battle-chickens.golden_egg.usage": "Right-click on the ground to hatch a rideable, loyal Giga Chicken!",
+  "tooltip.battle-chickens.golden_egg.stat": "Hatches the ultimate feathered war mount",
+
+  "tooltip.battle-chickens.generator_core.tag": "High-Tech Salvage",
+  "tooltip.battle-chickens.generator_core.desc": "Electromagnetic core harvested from Day 5+ Golem Walkers.",
+  "tooltip.battle-chickens.generator_core.usage": "Used with war feathers and scrap plates to forge the Flockguard Sigil.",
+  "tooltip.battle-chickens.generator_core.stat": "30% drop chance from Golem Walkers",
+
+  "tooltip.battle-chickens.flockguard_sigil.tag": "Legendary Relic",
+  "tooltip.battle-chickens.flockguard_sigil.desc": "Ancient warding talisman forged to resist the Chicken Overlord.",
+  "tooltip.battle-chickens.flockguard_sigil.usage": "Hold in either hand to brace against incoming attacks.",
+  "tooltip.battle-chickens.flockguard_sigil.stat": "100% Knockback Resistance & -40% damage from all chickens",
+
+  "tooltip.battle-chickens.lasso.tag": "Heavy Weapon",
+  "tooltip.battle-chickens.lasso.desc": "Rips up and hurls a flat 3x3 boulder along a ballistic arc.",
+  "tooltip.battle-chickens.lasso.usage": "Aim higher to throw farther; the boulder falls and explodes on impact.",
+  "tooltip.battle-chickens.lasso.stat": "Heavy impact damage | 10 second cooldown",
+
+  "tooltip.battle-chickens.scrap_bench.tag": "Field Workstation",
+  "tooltip.battle-chickens.scrap_bench.desc": "Field crafting table for assembling Purge tech and blueprints.",
+  "tooltip.battle-chickens.scrap_bench.usage": "Place and right-click to open the crafting grid.",
+  "tooltip.battle-chickens.scrap_bench.stat": "Uses the standard crafting-table interface",
+
+  "tooltip.battle-chickens.bunker_block.tag": "Reinforced Structure",
+  "tooltip.battle-chickens.bunker_block.desc": "Exceptionally durable fortification that resists ordinary mining and siege damage.",
+  "tooltip.battle-chickens.bunker_block.usage": "Siege blasts and rams crack it after 256 hits and break it after 1,024. Lasso impacts cannot damage it.",
+  "tooltip.battle-chickens.bunker_block.stat": "High mining and blast resistance | Cracks at 256, breaks at 1,024 siege hits"
 }

@@ -1,6 +1,7 @@
 package com.cluck.item;
 
 import com.cluck.BattleChickens;
+import com.cluck.event.PurgeUnits;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -52,11 +53,14 @@ public final class OverlordCoreItem extends BlockItem {
 				1, 0, 0, 0, 0);
 		for (Entity entity : serverLevel.getEntities(player, new AABB(impact, impact).inflate(8),
 				candidate -> candidate instanceof LivingEntity && candidate.isAlive())) {
+			LivingEntity target = (LivingEntity) entity;
+			if (!PurgeUnits.hasBlastExposure(serverLevel, impact, target)) {
+				continue;
+			}
 			float damage = entity instanceof Player
 					? 40 * BattleChickens.CONFIG.peckzookaPvpDamageMultiplier() : 40;
 			if (damage > 0) {
-				((LivingEntity) entity).hurtServer(serverLevel,
-						player.damageSources().playerAttack(player), damage);
+				target.hurtServer(serverLevel, player.damageSources().playerAttack(player), damage);
 			}
 		}
 		if (!serverPlayer.getAbilities().instabuild) {

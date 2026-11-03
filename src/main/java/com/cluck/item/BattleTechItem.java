@@ -177,6 +177,12 @@ public final class BattleTechItem extends Item {
 			float damage = entity instanceof Player ? 8 * BattleChickens.CONFIG.peckzookaPvpDamageMultiplier() : 8;
 			if (damage > 0) {
 				LivingEntity target = (LivingEntity) entity;
+				if (target instanceof ServerPlayer serverTarget) {
+					damage *= PurgeUnits.explosiveDefenseMultiplier(serverTarget);
+				}
+				if (!PurgeUnits.hasBlastExposure((ServerLevel) level, impact, target)) {
+					continue;
+				}
 				target.hurtServer((ServerLevel) level,
 						player.damageSources().playerAttack(player), damage);
 				Vec3 knockback = target.position().subtract(impact).normalize();
@@ -223,7 +229,13 @@ public final class BattleTechItem extends Item {
 				candidate -> candidate instanceof LivingEntity && candidate.isAlive())) {
 			float damage = entity instanceof Player ? 40 * BattleChickens.CONFIG.peckzookaPvpDamageMultiplier() : 40;
 			if (damage > 0) {
-				((LivingEntity) entity).hurtServer(level, player.damageSources().playerAttack(player), damage);
+				LivingEntity target = (LivingEntity) entity;
+				if (target instanceof ServerPlayer serverTarget) {
+					damage *= PurgeUnits.explosiveDefenseMultiplier(serverTarget);
+				}
+				if (PurgeUnits.hasBlastExposure(level, impact, target)) {
+					target.hurtServer(level, player.damageSources().playerAttack(player), damage);
+				}
 			}
 		}
 		if (!player.getAbilities().instabuild) {
@@ -234,7 +246,7 @@ public final class BattleTechItem extends Item {
 	}
 
 	private boolean beak47(ServerPlayer player) {
-		LivingEntity target = aimedTarget(player, 28);
+		LivingEntity target = aimedTarget(player, 40);
 		if (target == null) {
 			return false;
 		}
@@ -242,7 +254,7 @@ public final class BattleTechItem extends Item {
 			player.sendSystemMessage(Component.literal("The Beak-47 needs wheat seeds."));
 			return false;
 		}
-		damage(player, target, 5);
+		damage(player, target, 8);
 		ServerLevel level = player.level();
 		level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 0.6, target.getZ(),
 				4, 0.2, 0.25, 0.2, 0.05);
@@ -251,7 +263,7 @@ public final class BattleTechItem extends Item {
 	}
 
 	private boolean roosterSpear(ServerPlayer player) {
-		LivingEntity target = aimedTarget(player, 4.5);
+		LivingEntity target = aimedTarget(player, 6.5);
 		if (target == null) {
 			return false;
 		}

@@ -151,6 +151,16 @@ public final class PurgeWorldData extends SavedData {
 		return Math.min(1.0F, (float) elapsedTicks / (eventDays * 24_000.0F));
 	}
 
+	public boolean jumpToDay(int day) {
+		if (!active || day < 1 || day > eventDays) {
+			return false;
+		}
+		elapsedTicks = (day - 1L) * 24_000L;
+		currentDay = day;
+		setDirty();
+		return true;
+	}
+
 	public boolean start(int threat, int eventDays, long currentWorldTick) {
 		if (active || currentWorldTick < nextEventTick) {
 			return false;
