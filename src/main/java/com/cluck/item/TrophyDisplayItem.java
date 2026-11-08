@@ -58,6 +58,9 @@ public final class TrophyDisplayItem extends Item {
 
 	@Override
 	public InteractionResult useOn(UseOnContext context) {
+		if (context.getItemInHand().is(ModItems.NEMESIS_TROPHY)) {
+			return InteractionResult.PASS;
+		}
 		if (context.getLevel().isClientSide()) {
 			return InteractionResult.SUCCESS;
 		}

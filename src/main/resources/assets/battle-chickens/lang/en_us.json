@@ -32,8 +32,6 @@
   "item.battle-chickens.rooster_spear": "Rooster Spear",
   "item.battle-chickens.flame_fryer": "Flame Fryer",
   "item.battle-chickens.sniper_beak": "Sniper Beak",
-  "item.battle-chickens.riot_helmet": "Riot Helmet",
-  "item.battle-chickens.reactive_plating": "Reactive Plating",
   "item.battle-chickens.medic_syringe": "Medic Syringe",
   "item.battle-chickens.drumstick_of_valor": "Drumstick of Valor",
   "item.battle-chickens.cluck_radar": "Cluck Radar",
@@ -44,6 +42,7 @@
   "item.battle-chickens.lasso": "Lasso",
   "block.battle-chickens.scrap_bench": "Scrap Bench",
   "block.battle-chickens.bunker_block": "Bunker Block",
+  "block.battle-chickens.bunker_glass": "Bunker Glass",
   "block.battle-chickens.radar_coop": "Radar Coop",
   "block.battle-chickens.jammer_coop": "Jammer Coop",
   "block.battle-chickens.shield_coop": "Shield Coop",
@@ -68,6 +67,13 @@
   "entity.battle-chickens.outpost_guard": "Outpost Guard",
   "entity.battle-chickens.giga_chicken": "Giga Chicken",
   "entity.battle-chickens.shield_generator_golem": "Shield Generator Golem",
+  "entity.battle-chickens.enraged_golem": "Enraged Golem",
+  "entity.battle-chickens.armored_tank": "Armored Ravager Tank",
+  "entity.battle-chickens.overlord": "The Overlord",
+  "entity.battle-chickens.purge_drone": "Purge Drone",
+  "entity.battle-chickens.purge_gunship": "Purged Gunship",
+  "entity.battle-chickens.sky_overlord": "The Sky Overlord",
+  "entity.battle-chickens.veteran_rooster": "Veteran Rooster",
 
   "tooltip.battle-chickens.ominous_egg.tag": "Event Trigger",
   "tooltip.battle-chickens.ominous_egg.desc": "Initiates the 7-day Chicken Purge event at Threat Level I.",
@@ -136,8 +142,8 @@
 
   "tooltip.battle-chickens.overlord_core.tag": "Boss Artifact",
   "tooltip.battle-chickens.overlord_core.desc": "Supercharged mechanical power core of the Chicken Overlord.",
-  "tooltip.battle-chickens.overlord_core.usage": "Right-click to call an Orbital Strike. Sneak-Right-Click a block to deploy a Defense Core.",
-  "tooltip.battle-chickens.overlord_core.stat": "Orbital Strike: Massive Area Blast | Defense Core: Permanent Area Shield",
+  "tooltip.battle-chickens.overlord_core.usage": "Hold right-click to charge a vertical sonic boom (+10% damage/size per second); release to fire (10s cooldown). A 10s charge fires five mega booms (5m cooldown; charge caps at 9s while recharging). Sneak-right-click a block to deploy a Defense Core.",
+  "tooltip.battle-chickens.overlord_core.stat": "Sonic Boom: Charged Vertical Blast | Ultimate: Five Mega Booms | Defense Core: Permanent Area Shield",
 
   "tooltip.battle-chickens.scarecrow_turret.tag": "Defense Structure",
   "tooltip.battle-chickens.scarecrow_turret.desc": "Armor-stand sentry dressed as a pumpkin-headed crossbow scarecrow.",
@@ -219,10 +225,10 @@
   "tooltip.battle-chickens.egg_cannon.usage": "Right-click with eggs in inventory to fire high-impact projectiles.",
   "tooltip.battle-chickens.egg_cannon.stat": "Extreme knockback force against advancing swarms",
 
-  "tooltip.battle-chickens.flak_cannon.tag": "Anti-Air Weapon",
+  "tooltip.battle-chickens.flak_cannon.tag": "Pellet Shotgun",
   "tooltip.battle-chickens.flak_cannon.desc": "Short-barrel combat shotgun loaded with shrapnel pellets.",
-  "tooltip.battle-chickens.flak_cannon.usage": "Right-click to unleash a wide spray of anti-air shrapnel.",
-  "tooltip.battle-chickens.flak_cannon.stat": "Triple damage against airborne gunships and Phantoms",
+  "tooltip.battle-chickens.flak_cannon.usage": "Right-click to fire a wide, short-range spread of seven pellets; intercept the Overlord's targeting drones.",
+  "tooltip.battle-chickens.flak_cannon.stat": "Small bonus damage to Phantoms | 20-block range",
 
   "tooltip.battle-chickens.beak_47.tag": "Rapid-Fire Weapon",
   "tooltip.battle-chickens.beak_47.desc": "High-cadence assault rifle chambered in wheat seeds.",
@@ -244,16 +250,6 @@
   "tooltip.battle-chickens.sniper_beak.usage": "Right-click with arrows in inventory to fire high-velocity rounds.",
   "tooltip.battle-chickens.sniper_beak.stat": "Effective Range: 96 Blocks | Armor-piercing damage",
 
-  "tooltip.battle-chickens.riot_helmet.tag": "Ballistic Armor",
-  "tooltip.battle-chickens.riot_helmet.desc": "Reinforced riot helmet with a heavy blast visor.",
-  "tooltip.battle-chickens.riot_helmet.usage": "Wear as helmet to deflect incoming frontal arrows and gain Resistance.",
-  "tooltip.battle-chickens.riot_helmet.stat": "Blocks 100% frontal projectile damage while guarding",
-
-  "tooltip.battle-chickens.reactive_plating.tag": "Armor Upgrade",
-  "tooltip.battle-chickens.reactive_plating.desc": "Explosion-dampening reactive composite armor.",
-  "tooltip.battle-chickens.reactive_plating.usage": "Keep anywhere in your inventory to dampen explosive blast damage.",
-  "tooltip.battle-chickens.reactive_plating.stat": "Passively reduces incoming explosive damage by 30%",
-
   "tooltip.battle-chickens.medic_syringe.tag": "Tactical Medical",
   "tooltip.battle-chickens.medic_syringe.desc": "Combat adrenaline injector salvaged from Medic Hens.",
   "tooltip.battle-chickens.medic_syringe.usage": "Right-click to inject adrenaline and rapidly treat wounds.",
@@ -271,12 +267,12 @@
 
   "tooltip.battle-chickens.signal_scrambler.tag": "Electronic Countermeasure",
   "tooltip.battle-chickens.signal_scrambler.desc": "Portable broadcast scrambler that jams hostile targeting sensors.",
-  "tooltip.battle-chickens.signal_scrambler.usage": "Hold in hand to confuse enemy sniper lock-on and rocket tracking.",
-  "tooltip.battle-chickens.signal_scrambler.stat": "Prevents snipers and bosses from acquiring lock-on",
+  "tooltip.battle-chickens.signal_scrambler.usage": "Use to turn invisible and scramble boss aim for 30 seconds.",
+  "tooltip.battle-chickens.signal_scrambler.stat": "Boss attacks aim 5-10 blocks away while you are invisible",
 
   "tooltip.battle-chickens.golden_egg.tag": "Mythical Egg",
   "tooltip.battle-chickens.golden_egg.desc": "Radiant golden egg laid by surviving chickens after the Overlord falls.",
-  "tooltip.battle-chickens.golden_egg.usage": "Right-click on the ground to hatch a rideable, loyal Giga Chicken!",
+  "tooltip.battle-chickens.golden_egg.usage": "Right-click the ground to hatch a loyal Giga Chicken; right-click it again to remount after dismounting.",
   "tooltip.battle-chickens.golden_egg.stat": "Hatches the ultimate feathered war mount",
 
   "tooltip.battle-chickens.generator_core.tag": "High-Tech Salvage",
@@ -302,5 +298,9 @@
   "tooltip.battle-chickens.bunker_block.tag": "Reinforced Structure",
   "tooltip.battle-chickens.bunker_block.desc": "Exceptionally durable fortification that resists ordinary mining and siege damage.",
   "tooltip.battle-chickens.bunker_block.usage": "Siege blasts and rams crack it after 256 hits and break it after 1,024. Lasso impacts cannot damage it.",
-  "tooltip.battle-chickens.bunker_block.stat": "High mining and blast resistance | Cracks at 256, breaks at 1,024 siege hits"
+  "tooltip.battle-chickens.bunker_block.stat": "High mining and blast resistance | Cracks at 256, breaks at 1,024 siege hits",
+  "tooltip.battle-chickens.bunker_glass.tag": "Reinforced Glass",
+  "tooltip.battle-chickens.bunker_glass.desc": "Tinted, light-blocking fortification glass with half the durability of a Bunker Block.",
+  "tooltip.battle-chickens.bunker_glass.usage": "Siege blasts and rams crack it after 128 hits and break it after 512.",
+  "tooltip.battle-chickens.bunker_glass.stat": "Half bunker mining and blast resistance | 512 siege hits"
 }

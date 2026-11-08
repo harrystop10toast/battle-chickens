@@ -64,16 +64,23 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 	}
 
 	private void detonate(ServerLevel level, Vec3 impact, Entity directHit) {
-		Entity owner = getOwner();
-		boolean bossRocket = PurgeUnits.isBoss(owner) || BossController.isAerialBoss(owner);
-		boolean bunkerImpact = blockImpact != null
-				&& level.getBlockState(blockImpact).getBlock() instanceof BunkerBlock;
+		detonate(level, impact, directHit, blockImpact, this, getOwner(), false, null);
+	}
+
+	public static void detonateDrone(ServerLevel level, Vec3 impact, Entity directHit, BlockPos blockImpact,
+			Entity projectile, Entity owner, LivingEntity target) {
+		detonate(level, impact, directHit, blockImpact, projectile, owner, true, target);
+	}
+
+	private static void detonate(ServerLevel level, Vec3 impact, Entity directHit, BlockPos blockImpact,
+			Entity projectile, Entity owner, boolean guidedDrone, LivingEntity homingTarget) {
+		boolean bossRocket = !guidedDrone && (PurgeUnits.isBoss(owner) || BossController.isAerialBoss(owner));
+		boolean bunkerImpact = blockImpact != null && level.getBlockState(blockImpact).getBlock() instanceof BunkerBlock;
 		if (bunkerImpact) {
-			BunkerBlock.handleDestructionAttempt(
-					null, level, blockImpact, owner);
+			BunkerBlock.handleDestructionAttempt(null, level, blockImpact, owner);
 		}
-		double blastRadius = bossRocket ? 5.5 : SPLASH_RADIUS;
-		DamageSourceFactory damageSourceFactory = new DamageSourceFactory(level, this, owner);
+		double blastRadius = guidedDrone ? 4.0 : bossRocket ? 5.5 : SPLASH_RADIUS;
+		DamageSourceFactory damageSourceFactory = new DamageSourceFactory(level, projectile, owner, guidedDrone);
 		AABB blast = new AABB(impact, impact).inflate(blastRadius);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, blast, LivingEntity::isAlive)) {
 			if (bunkerImpact) {
@@ -83,8 +90,9 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 				continue;
 			}
 			if (target == directHit) {
-				if (!(owner instanceof LivingEntity shooter)
-						|| !PurgeUnits.hasClearAttackPath(level, shooter, target)) {
+				if (!(guidedDrone && target == homingTarget)
+						&& (!(owner instanceof LivingEntity shooter)
+								|| !PurgeUnits.hasClearAttackPath(level, shooter, target))) {
 					continue;
 				}
 			} else if (!PurgeUnits.hasBlastExposure(level, impact, target)) {
@@ -103,8 +111,8 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 				}
 			}
 			float damage = target == directHit
-					? (bossRocket ? 58 : DIRECT_DAMAGE)
-					: (bossRocket ? 20 : SPLASH_DAMAGE);
+					? (guidedDrone ? 36 : bossRocket ? 58 : DIRECT_DAMAGE)
+					: (guidedDrone ? 14 : bossRocket ? 20 : SPLASH_DAMAGE);
 			if (target == directHit && target instanceof ServerPlayer player
 					&& owner instanceof LivingEntity livingOwner && !(owner instanceof ServerPlayer)
 					&& player.getOffhandItem().is(ModItems.CLUCK_SHIELD)) {
@@ -134,14 +142,16 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 					new AABB(impact, impact).inflate(8))) {
 				double distanceSquared = player.distanceToSqr(impact);
 				if (distanceSquared > SPLASH_RADIUS * SPLASH_RADIUS && distanceSquared <= 64
-						&& !player.hasLineOfSight(this)) {
+						&& !player.hasLineOfSight(projectile)) {
 					PurgeManager.award(player, "click_beep", "click_beep");
 				}
 			}
 		}
 
 		if (!bunkerImpact && level.getGameRules().get(GameRules.MOB_GRIEFING)) {
-			int radius = owner instanceof ServerPlayer
+			int radius = guidedDrone
+					? 2
+					: owner instanceof ServerPlayer
 					? BattleChickens.CONFIG.rocketBlockRadius()
 					: bossRocket
 							? BattleChickens.CONFIG.bossTerrainRadius()
@@ -150,15 +160,18 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 				breakBlocks(level, impact, radius, owner);
 			}
 		}
-		level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y, impact.z, 1, 0, 0, 0, 0);
-		level.sendParticles(ParticleTypes.SMOKE, impact.x, impact.y, impact.z, 12, 0.45, 0.45, 0.45, 0.04);
-		level.playSound(null, BlockPos.containing(impact), SoundEvents.FIREWORK_ROCKET_BLAST,
-				SoundSource.PLAYERS, 1.0F, 0.85F);
-		level.broadcastEntityEvent(this, (byte) 17);
-		discard();
+		if (!bunkerImpact) {
+			level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y, impact.z, 1, 0, 0, 0, 0);
+			level.sendParticles(ParticleTypes.SMOKE, impact.x, impact.y, impact.z,
+					12, 0.45, 0.45, 0.45, 0.04);
+			level.playSound(null, BlockPos.containing(impact), SoundEvents.FIREWORK_ROCKET_BLAST,
+					SoundSource.PLAYERS, 1.0F, 0.85F);
+			level.broadcastEntityEvent(projectile, (byte) 17);
+		}
+		projectile.discard();
 	}
 
-	private void breakBlocks(ServerLevel level, Vec3 impact, int radius, Entity owner) {
+	private static void breakBlocks(ServerLevel level, Vec3 impact, int radius, Entity owner) {
 		BlockPos center = BlockPos.containing(impact);
 		ServerPlayer player = owner instanceof ServerPlayer serverPlayer ? serverPlayer : null;
 		for (int x = -radius; x <= radius; x++) {
@@ -178,15 +191,18 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 		}
 	}
 
-	private record DamageSourceFactory(ServerLevel level, FireworkRocketEntity projectile, Entity owner) {
+	private record DamageSourceFactory(ServerLevel level, Entity projectile, Entity owner, boolean guidedDrone) {
 		net.minecraft.world.damagesource.DamageSource create() {
+			if (guidedDrone) {
+				return level.damageSources().explosion(projectile, owner);
+			}
 			if (owner instanceof ServerPlayer player) {
 				return level.damageSources().playerAttack(player);
 			}
 			if (owner instanceof LivingEntity living) {
 				return level.damageSources().mobAttack(living);
 			}
-			return level.damageSources().fireworks(projectile, owner);
+			return level.damageSources().fireworks((FireworkRocketEntity) projectile, owner);
 		}
 	}
 }

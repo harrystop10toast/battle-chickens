@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["STS", "TIT", "STS"],
+  "key": {
+    "S": "minecraft:obsidian",
+    "T": "minecraft:tinted_glass",
+    "I": "minecraft:iron_block"
+  },
+  "result": {"id": "battle-chickens:bunker_glass", "count": 4}
+}

@@ -2,6 +2,7 @@ package com.cluck.item;
 
 import com.cluck.BattleChickens;
 import com.cluck.block.BunkerBlock;
+import com.cluck.block.BunkerGlassBlock;
 import com.cluck.block.DefenseCoreBlock;
 import com.cluck.block.PurgeCoopBlock;
 import com.cluck.block.ScarecrowTurretBlock;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 public final class ModItems {
 	public static final ScrapBenchBlock SCRAP_BENCH = registerScrapBench();
 	public static final Item BUNKER_BLOCK = registerBunkerBlock();
+	public static final Item BUNKER_GLASS = registerBunkerGlass();
 	public static final Item OMINOUS_EGG = register("ominous_egg", 1);
 	public static final Item GILDED_OMINOUS_EGG = register("gilded_ominous_egg", 2);
 	public static final Item CURSED_OMINOUS_EGG = register("cursed_ominous_egg", 3);
@@ -55,8 +57,6 @@ public final class ModItems {
 	public static final Item ROOSTER_SPEAR = battleTech("rooster_spear", BattleTechItem.Ability.ROOSTER_SPEAR);
 	public static final Item FLAME_FRYER = battleTech("flame_fryer", BattleTechItem.Ability.FLAME_FRYER);
 	public static final Item SNIPER_BEAK = battleTech("sniper_beak", BattleTechItem.Ability.SNIPER_BEAK);
-	public static final Item RIOT_HELMET = battleTech("riot_helmet", BattleTechItem.Ability.RIOT_HELMET);
-	public static final Item REACTIVE_PLATING = battleTech("reactive_plating", BattleTechItem.Ability.REACTIVE_PLATING);
 	public static final Item MEDIC_SYRINGE = battleTech("medic_syringe", BattleTechItem.Ability.MEDIC_SYRINGE, 16);
 	public static final Item DRUMSTICK_OF_VALOR = battleTech("drumstick_of_valor", BattleTechItem.Ability.DRUMSTICK_OF_VALOR, 16);
 	public static final Item CLUCK_RADAR = battleTech("cluck_radar", BattleTechItem.Ability.CLUCK_RADAR);
@@ -86,6 +86,16 @@ public final class ModItems {
 		var block = Registry.register(BuiltInRegistries.BLOCK, id,
 				new BunkerBlock(BlockBehaviour.Properties.of().strength(50.0F, 1200.0F)
 						.requiresCorrectToolForDrops().setId(blockKey)));
+		var itemKey = ResourceKey.create(Registries.ITEM, id);
+		return Registry.register(BuiltInRegistries.ITEM, id, new BlockItem(block, new Item.Properties().setId(itemKey)));
+	}
+
+	private static Item registerBunkerGlass() {
+		var id = BattleChickens.id("bunker_glass");
+		var blockKey = ResourceKey.create(Registries.BLOCK, id);
+		var block = Registry.register(BuiltInRegistries.BLOCK, id,
+				new BunkerGlassBlock(BlockBehaviour.Properties.of().strength(25.0F, 600.0F)
+						.sound(SoundType.GLASS).noOcclusion().requiresCorrectToolForDrops().setId(blockKey)));
 		var itemKey = ResourceKey.create(Registries.ITEM, id);
 		return Registry.register(BuiltInRegistries.ITEM, id, new BlockItem(block, new Item.Properties().setId(itemKey)));
 	}
@@ -225,6 +235,7 @@ public final class ModItems {
 		CreativeModeTabEvents.modifyOutputEvent(ingredients).register(output -> {
 			output.accept(SCRAP_BENCH.asItem());
 			output.accept(BUNKER_BLOCK);
+			output.accept(BUNKER_GLASS);
 			output.accept(OMINOUS_EGG);
 			output.accept(GILDED_OMINOUS_EGG);
 			output.accept(CURSED_OMINOUS_EGG);
@@ -258,8 +269,6 @@ public final class ModItems {
 			output.accept(ROOSTER_SPEAR);
 			output.accept(FLAME_FRYER);
 			output.accept(SNIPER_BEAK);
-			output.accept(RIOT_HELMET);
-			output.accept(REACTIVE_PLATING);
 			output.accept(MEDIC_SYRINGE);
 			output.accept(DRUMSTICK_OF_VALOR);
 			output.accept(CLUCK_RADAR);

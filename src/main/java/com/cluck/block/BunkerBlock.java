@@ -16,14 +16,20 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
-public final class BunkerBlock extends Block {
-	private static final int CRACK_THRESHOLD = 256;
-	private static final int BREAK_THRESHOLD = 1024;
+public class BunkerBlock extends Block {
+	private final int crackThreshold;
+	private final int breakThreshold;
 	public static final BooleanProperty CRACKED = BooleanProperty.create("cracked");
-	public static final IntegerProperty DAMAGE = IntegerProperty.create("damage", 0, BREAK_THRESHOLD - 1);
+	public static final IntegerProperty DAMAGE = IntegerProperty.create("damage", 0, 1023);
 
 	public BunkerBlock(BlockBehaviour.Properties properties) {
+		this(properties, 256, 1024);
+	}
+
+	protected BunkerBlock(BlockBehaviour.Properties properties, int crackThreshold, int breakThreshold) {
 		super(properties);
+		this.crackThreshold = crackThreshold;
+		this.breakThreshold = breakThreshold;
 		registerDefaultState(defaultBlockState().setValue(CRACKED, false).setValue(DAMAGE, 0));
 	}
 
@@ -46,11 +52,12 @@ public final class BunkerBlock extends Block {
 		if (!(state.getBlock() instanceof BunkerBlock)) {
 			return false;
 		}
-		int damage = Math.min(BREAK_THRESHOLD, state.getValue(DAMAGE) + Math.max(1, attempts));
-		if (damage >= BREAK_THRESHOLD) {
+		BunkerBlock bunker = (BunkerBlock) state.getBlock();
+		int damage = Math.min(bunker.breakThreshold, state.getValue(DAMAGE) + Math.max(1, attempts));
+		if (damage >= bunker.breakThreshold) {
 			level.destroyBlock(pos, false, owner);
 		} else {
-			level.setBlockAndUpdate(pos, state.setValue(CRACKED, damage >= CRACK_THRESHOLD)
+			level.setBlockAndUpdate(pos, state.setValue(CRACKED, damage >= bunker.crackThreshold)
 					.setValue(DAMAGE, damage));
 		}
 		return true;
@@ -85,6 +92,10 @@ public final class BunkerBlock extends Block {
 		}
 		level.destroyBlock(pos, dropItems, owner);
 		return true;
+	}
+
+	public static boolean hasClearBlockPath(ServerLevel level, Vec3 origin, BlockPos targetPos) {
+		return hasBlastLineOfSight(level, origin, targetPos);
 	}
 
 	private static boolean hasBlastLineOfSight(ServerLevel level, Vec3 origin, BlockPos targetPos) {

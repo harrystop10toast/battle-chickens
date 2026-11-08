@@ -3,7 +3,6 @@ package com.cluck.item;
 import com.cluck.event.PurgeUnits;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,13 +43,14 @@ public final class ScarecrowTurretItem extends Item {
 				return InteractionResult.SUCCESS;
 			}
 			if (!(player instanceof ServerPlayer serverPlayer)) {
-				return InteractionResult.PASS;
+				return InteractionResult.SUCCESS;
 			}
 			ItemStack held = player.getItemInHand(hand);
 			if (held.is(Items.WHEAT_SEEDS)) {
 				int ammo = getAmmo(entity);
 				if (ammo >= CAPACITY) {
-					return InteractionResult.PASS;
+					serverPlayer.sendSystemMessage(Component.literal("Scarecrow Turret is fully loaded."));
+					return InteractionResult.SUCCESS;
 				}
 				int loaded = Math.min(16, CAPACITY - ammo);
 				setAmmo(entity, ammo + loaded);
@@ -64,9 +64,8 @@ public final class ScarecrowTurretItem extends Item {
 			if (held.isEmpty()) {
 				serverPlayer.sendSystemMessage(Component.literal(
 						"Scarecrow Turret ammunition: " + getAmmo(entity) + "/64."));
-				return InteractionResult.SUCCESS;
 			}
-			return InteractionResult.PASS;
+			return InteractionResult.SUCCESS;
 		});
 	}
 
@@ -125,13 +124,7 @@ public final class ScarecrowTurretItem extends Item {
 				continue;
 			}
 			Vec3 destination = target.getBoundingBox().getCenter();
-			Vec3 direction = destination.subtract(origin);
-			Vec3 step = direction.normalize().scale(0.5);
-			for (double distance = 0; distance < direction.length(); distance += 0.5) {
-				Vec3 point = origin.add(step.scale(distance / 0.5));
-				level.sendParticles(ParticleTypes.ELECTRIC_SPARK, point.x, point.y, point.z,
-						2, 0.015, 0.015, 0.015, 0);
-			}
+			BulletTracer.fire(level, origin, destination);
 			target.hurtServer(level, level.damageSources().mobAttack((ArmorStand) entity), 6);
 			setAmmo(entity, getAmmo(entity) - 1);
 			level.playSound(null, entity.blockPosition(), SoundEvents.CROSSBOW_SHOOT,

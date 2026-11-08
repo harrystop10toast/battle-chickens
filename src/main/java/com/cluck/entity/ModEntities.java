@@ -11,13 +11,24 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Ravager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.Map;
 
 public final class ModEntities {
 	public static final EntityType<WarriorChicken> WARRIOR_CHICKEN = registerWarriorChicken();
 	public static final EntityType<ShieldGeneratorGolem> SHIELD_GENERATOR_GOLEM = registerShieldGeneratorGolem();
+	public static final EntityType<EnragedGolem> ENRAGED_GOLEM = registerEnragedGolem();
+	public static final EntityType<ArmoredTank> ARMORED_TANK = registerArmoredTank();
+	public static final EntityType<OverlordBeast> OVERLORD_BEAST = registerOverlordBeast();
+	public static final EntityType<PurgeDrone> PURGE_DRONE = registerPurgeDrone();
+	public static final EntityType<PurgeGunship> PURGE_GUNSHIP = registerPurgeGunship();
+	public static final EntityType<SkyOverlord> SKY_OVERLORD = registerSkyOverlord();
+	public static final EntityType<VeteranRooster> VETERAN_ROOSTER = registerVeteranRooster();
 	public static final EntityType<PurgeChicken> RPG_CHICKEN = registerRole("rpg_chicken");
 	public static final EntityType<PurgeChicken> GRENADIER_CHICKEN = registerRole("grenadier_chicken");
 	public static final EntityType<PurgeChicken> SNIPER_CHICKEN = registerRole("sniper_chicken");
@@ -90,7 +101,13 @@ public final class ModEntities {
 			BUFFER_GENERAL, OVERLORD_BOMBARDIER, SUMMONED_CHICKEN, OUTPOST_GUARD, GIGA_CHICKEN);
 
 	public static void register() {
-		FabricDefaultAttributeRegistry.register(SHIELD_GENERATOR_GOLEM, IronGolem.createAttributes());
+		FabricDefaultAttributeRegistry.register(SHIELD_GENERATOR_GOLEM, ShieldGeneratorGolem.createAttributes());
+		FabricDefaultAttributeRegistry.register(ENRAGED_GOLEM, IronGolem.createAttributes());
+		FabricDefaultAttributeRegistry.register(ARMORED_TANK, Ravager.createAttributes());
+		FabricDefaultAttributeRegistry.register(OVERLORD_BEAST, Ravager.createAttributes());
+		FabricDefaultAttributeRegistry.register(PURGE_GUNSHIP, Monster.createMonsterAttributes());
+		FabricDefaultAttributeRegistry.register(SKY_OVERLORD, Monster.createMonsterAttributes());
+		FabricDefaultAttributeRegistry.register(VETERAN_ROOSTER, Villager.createAttributes());
 		for (EntityType<? extends Chicken> type : CHICKEN_TYPES) {
 			FabricDefaultAttributeRegistry.register(type, type == WARRIOR_CHICKEN
 					? WarriorChicken.createAttributes() : PurgeChicken.createAttributes());
@@ -137,5 +154,73 @@ public final class ModEntities {
 						.sized(1.4F, 2.7F)
 						.clientTrackingRange(10)
 						.build(key));
+	}
+
+	private static EntityType<EnragedGolem> registerEnragedGolem() {
+		var id = BattleChickens.id("enraged_golem");
+		var key = ResourceKey.create(Registries.ENTITY_TYPE, id);
+		return Registry.register(BuiltInRegistries.ENTITY_TYPE, id,
+				EntityType.Builder.of(EnragedGolem::new, MobCategory.MISC)
+						.sized(1.4F, 2.7F)
+						.clientTrackingRange(10)
+						.build(key));
+	}
+
+	private static EntityType<ArmoredTank> registerArmoredTank() {
+		return registerMob("armored_tank", EntityType.Builder.of(ArmoredTank::new, MobCategory.MONSTER)
+				.sized(1.95F, 2.2F)
+				.passengerAttachments(new Vec3(0.0, 2.2625, -0.0625))
+				.clientTrackingRange(10)
+				.notInPeaceful());
+	}
+
+	private static EntityType<OverlordBeast> registerOverlordBeast() {
+		return registerMob("overlord", EntityType.Builder.of(OverlordBeast::new, MobCategory.MONSTER)
+				.sized(1.95F, 2.2F)
+				.passengerAttachments(new Vec3(0.0, 2.2625, -0.0625))
+				.clientTrackingRange(10)
+				.notInPeaceful());
+	}
+
+	private static EntityType<PurgeDrone> registerPurgeDrone() {
+		return registerMob("purge_drone", EntityType.Builder.of(PurgeDrone::new, MobCategory.MISC)
+				.fireImmune()
+				.sized(0.25F, 0.25F)
+				.clientTrackingRange(8)
+				);
+	}
+
+	private static EntityType<PurgeGunship> registerPurgeGunship() {
+		return registerMob("purge_gunship", EntityType.Builder.of(PurgeGunship::new, MobCategory.MONSTER)
+				.sized(0.9F, 0.5F)
+				.eyeHeight(0.175F)
+				.passengerAttachments(0.3375F)
+				.ridingOffset(-0.125F)
+				.clientTrackingRange(8)
+				.notInPeaceful());
+	}
+
+	private static EntityType<SkyOverlord> registerSkyOverlord() {
+		return registerMob("sky_overlord", EntityType.Builder.of(SkyOverlord::new, MobCategory.MONSTER)
+				.sized(0.9F, 0.5F)
+				.eyeHeight(0.175F)
+				.passengerAttachments(0.3375F)
+				.ridingOffset(-0.125F)
+				.clientTrackingRange(8)
+				.notInPeaceful());
+	}
+
+	private static EntityType<VeteranRooster> registerVeteranRooster() {
+		return registerMob("veteran_rooster", EntityType.Builder.of(VeteranRooster::new, MobCategory.MISC)
+				.sized(0.6F, 1.95F)
+				.eyeHeight(1.62F)
+				.clientTrackingRange(10));
+	}
+
+	private static <T extends net.minecraft.world.entity.Entity> EntityType<T> registerMob(String name,
+			EntityType.Builder<T> builder) {
+		var id = BattleChickens.id(name);
+		var key = ResourceKey.create(Registries.ENTITY_TYPE, id);
+		return Registry.register(BuiltInRegistries.ENTITY_TYPE, id, builder.build(key));
 	}
 }

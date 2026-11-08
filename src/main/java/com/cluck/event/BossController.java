@@ -1,8 +1,11 @@
 package com.cluck.event;
 
 import com.cluck.BattleChickens;
+import com.cluck.entity.OverlordBeast;
 import com.cluck.entity.ModEntities;
 import com.cluck.entity.ShieldGeneratorGolem;
+import com.cluck.entity.EnragedGolem;
+import com.cluck.entity.SkyOverlord;
 import com.cluck.item.ModItems;
 import com.cluck.projectile.PurgeRocketEntity;
 import com.cluck.projectile.SkyOverlordWitherSkull;
@@ -20,11 +23,10 @@ import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.golem.IronGolem;
-import net.minecraft.world.entity.monster.Phantom;
-import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -95,13 +97,13 @@ public final class BossController {
 		}
 	}
 
-	private record SonicBoom(UUID target, int fireAt) {
+	private record SonicBoom(Vec3 aim, int fireAt) {
 	}
 
 	private record GeneratorPulse(UUID target, Vec3 position, Vec3 direction, int age) {
 	}
 
-	private record MarkedBomb(Vec3 position, int detonationTick) {
+	private record MarkedBomb(int detonationTick, ItemEntity projectile) {
 	}
 
 	private record LightningChase(Vec3 impact, int strikeTick) {
@@ -127,7 +129,7 @@ public final class BossController {
 	private BossController() {
 	}
 
-	public static void spawnShieldGenerators(ServerLevel level, Ravager boss, ServerPlayer target, int threat) {
+	public static void spawnShieldGenerators(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		double x = boss.getX() + 10;
 		double z = boss.getZ();
 		int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
@@ -141,8 +143,8 @@ public final class BossController {
 		generator.setCustomName(Component.literal(GENERATOR_NAME));
 		generator.setCustomNameVisible(true);
 		generator.setTarget(target);
-		// One giant shield golem: 5x vanilla iron golem HP (100), single laser instead of a pack.
-		double health = 500.0 * BattleChickens.CONFIG.enemyHealthMultiplier();
+		// One giant shield golem: 10x vanilla iron golem HP after the boss-health increase.
+		double health = 1000.0 * BattleChickens.CONFIG.enemyHealthMultiplier();
 		if (generator.getAttribute(Attributes.MAX_HEALTH) != null) {
 			generator.getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
 			generator.setHealth((float) health);
@@ -151,29 +153,28 @@ public final class BossController {
 			generator.getAttribute(Attributes.SCALE).setBaseValue(3.0);
 			generator.refreshDimensions();
 		}
-		if (level.addFreshEntity(generator)) {
-			generator.setLeashedTo(boss, true);
-		}
+		level.addFreshEntity(generator);
 	}
 
 	public static void tick(ServerLevel level, List<ServerPlayer> players, int threat) {
 		List<Entity> loadedEntities = new ArrayList<>();
 		level.getAllEntities().forEach(loadedEntities::add);
 		for (Entity entity : loadedEntities) {
-			if (entity instanceof Ravager boss && hasName(boss, BOSS_NAME)) {
+			if (entity instanceof OverlordBeast boss && hasName(boss, BOSS_NAME)) {
 				tickBoss(level, boss, players, threat);
 			}
-			if (entity instanceof Phantom boss && isAerialBoss(boss)) {
+			if (entity instanceof SkyOverlord boss && isAerialBoss(boss)) {
 				tickAerialBoss(level, boss, players, threat);
 			}
 		}
 	}
 
-	private static void tickAerialBoss(ServerLevel level, Phantom boss, List<ServerPlayer> players, int threat) {
+	private static void tickAerialBoss(ServerLevel level, SkyOverlord boss, List<ServerPlayer> players, int threat) {
 		if (boss.tickCount % 40 == 0 || !boss.hasEffect(MobEffects.FIRE_RESISTANCE)) {
 			boss.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 100, 0, true, false));
 		}
 		boss.clearFire();
+		tickMarkedBombs(level, boss, threat);
 		ServerPlayer target = players.stream()
 				.filter(player -> player.level() == level && player.isAlive())
 				.min((first, second) -> Double.compare(boss.distanceToSqr(first), boss.distanceToSqr(second)))
@@ -202,17 +203,22 @@ public final class BossController {
 			teleportAerialBossNearPlayer(level, boss, target);
 		}
 		int biteCooldown = PHANTOM_BITE_COOLDOWNS.getOrDefault(boss.getUUID(), 0);
-		if (distanceSquared <= 6.5 * 6.5 && boss.tickCount >= biteCooldown) {
-			target.hurtServer(level, level.damageSources().mobAttack(boss),
-					(12 + threat * 2) * BattleChickens.CONFIG.enemyDamageMultiplier());
-			Vec3 biteKnockback = target.position().subtract(boss.position()).normalize();
-			applyDaySevenKnockback(target, biteKnockback.scale(0.2).add(0, 0.12, 0));
-			level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1, target.getZ(),
-					8, 0.3, 0.4, 0.3, 0.08);
+		Vec3 biteAim = PurgeUnits.bossAimPosition(level, target);
+		if (distanceSquared <= 6.5 * 6.5 && boss.tickCount >= biteCooldown
+				&& biteAim.distanceToSqr(target.getBoundingBox().getCenter()) <= 2.5 * 2.5) {
+			if (target.hurtServer(level, level.damageSources().mobAttack(boss),
+					(12 + threat * 2) * BattleChickens.CONFIG.enemyDamageMultiplier())) {
+				Vec3 biteKnockback = target.position().subtract(boss.position()).normalize();
+				applyDaySevenKnockback(target, biteKnockback.scale(0.2).add(0, 0.12, 0));
+				level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1, target.getZ(),
+						8, 0.3, 0.4, 0.3, 0.08);
+			}
 			PHANTOM_BITE_COOLDOWNS.put(boss.getUUID(), boss.tickCount + 20);
 		}
 		if (boss.tickCount % 100 == 0) {
-			showCombatAlert(target, Component.literal("Sky Overlord: rocket barrage — break line of sight!"));
+			if (PurgeUnits.hasClearAttackPath(level, boss, target)) {
+				showCombatAlert(target, Component.literal("Sky Overlord: rocket barrage — break line of sight!"));
+			}
 			fireRocket(level, boss, target, -0.5);
 			fireRocket(level, boss, target, 0.0);
 			fireRocket(level, boss, target, 0.5);
@@ -220,34 +226,26 @@ public final class BossController {
 					18, 1.0, 0.5, 1.0, 0.08);
 		}
 		List<MarkedBomb> bombs = BOMB_MARKS.get(boss.getUUID());
-		if ((bombs == null || bombs.isEmpty()) && boss.tickCount % 200 == 0) {
+		if ((bombs == null || bombs.isEmpty()) && boss.tickCount % 200 == 0
+				&& PurgeUnits.hasClearAttackPath(level, boss, target)) {
 			List<MarkedBomb> barrage = new java.util.ArrayList<>();
 			for (int index = -1; index <= 1; index++) {
-				Vec3 impact = target.position().add(index * 7.0,
+				Vec3 aim = target.position().add(aimOffset(level, target));
+				Vec3 impact = aim.add(index * 7.0,
 						0, level.getRandom().nextInt(7) - 3);
-				barrage.add(new MarkedBomb(impact, boss.tickCount + 40));
-				PurgeUnits.throwBossGrenade(level, boss, impact);
+				barrage.add(new MarkedBomb(boss.tickCount + 40,
+						PurgeUnits.throwBossGrenade(level, boss, impact)));
 			}
 			BOMB_MARKS.put(boss.getUUID(), barrage);
 			showCombatAlert(target, Component.literal("Phantom bombardment — leave the marked zones!"));
 			bombs = barrage;
 		}
-		if (bombs != null) {
-			for (MarkedBomb bomb : bombs) {
-				emitMark(level, bomb.position(), 5.5);
-			}
-			if (!bombs.isEmpty() && boss.tickCount >= bombs.getFirst().detonationTick()) {
-				for (MarkedBomb bomb : bombs) {
-					PurgeUnits.detonateBossGrenade(level, boss, bomb.position(), threat);
-				}
-				BOMB_MARKS.remove(boss.getUUID());
-			}
-		}
 		if (boss.tickCount % 280 == 0) {
 			showCombatAlert(target, Component.literal("Sky Overlord diving!"));
-			Vec3 dive = target.position().subtract(boss.position()).normalize();
+			Vec3 diveAim = target.position().add(aimOffset(level, target));
+			Vec3 dive = diveAim.subtract(boss.position()).normalize();
 			boss.setDeltaMovement(dive.scale(0.42).add(0, -0.08, 0));
-			if (boss.distanceToSqr(target) < 8 * 8) {
+			if (target.position().distanceToSqr(diveAim) < 6 * 6) {
 				target.hurtServer(level, level.damageSources().mobAttack(boss),
 						(6 + threat) * BattleChickens.CONFIG.enemyDamageMultiplier());
 			}
@@ -268,9 +266,25 @@ public final class BossController {
 		tickFlyingBombs(level, boss, threat);
 	}
 
-	private static void fireBlueWitherSkull(ServerLevel level, Phantom boss, ServerPlayer target) {
+	private static void tickMarkedBombs(ServerLevel level, SkyOverlord boss, int threat) {
+		List<MarkedBomb> bombs = BOMB_MARKS.get(boss.getUUID());
+		if (bombs == null) {
+			return;
+		}
+		if (!bombs.isEmpty() && boss.tickCount >= bombs.getFirst().detonationTick()) {
+			for (MarkedBomb bomb : bombs) {
+				if (bomb.projectile() != null) {
+					PurgeUnits.detonateBossGrenade(level, boss, bomb.projectile().position(), threat);
+					bomb.projectile().discard();
+				}
+			}
+			BOMB_MARKS.remove(boss.getUUID());
+		}
+	}
+
+	private static void fireBlueWitherSkull(ServerLevel level, SkyOverlord boss, ServerPlayer target) {
 		Vec3 start = boss.getEyePosition();
-		Vec3 aim = target.getBoundingBox().getCenter().subtract(start);
+		Vec3 aim = PurgeUnits.bossAimPosition(level, target).subtract(start);
 		if (aim.lengthSqr() < 0.01) {
 			return;
 		}
@@ -288,7 +302,7 @@ public final class BossController {
 		showCombatAlert(target, Component.literal("Sky Overlord fires a blue wither skull!"));
 	}
 
-	private static void damageNearbyGenerators(ServerLevel level, Phantom boss, int threat) {
+	private static void damageNearbyGenerators(ServerLevel level, SkyOverlord boss, int threat) {
 		float contactDamage = (10 + threat * 2) * BattleChickens.CONFIG.enemyDamageMultiplier();
 		for (IronGolem generator : level.getEntitiesOfClass(IronGolem.class, boss.getBoundingBox().inflate(6),
 				BossController::isGenerator)) {
@@ -298,7 +312,7 @@ public final class BossController {
 		}
 	}
 
-	private static void tickSpinAttack(ServerLevel level, Phantom boss, ServerPlayer target, int threat) {
+	private static void tickSpinAttack(ServerLevel level, SkyOverlord boss, ServerPlayer target, int threat) {
 		SpinAttack attack = SPIN_ATTACKS.get(boss.getUUID());
 		if (attack == null && boss.tickCount > 0 && boss.tickCount % 400 == 0) {
 			attack = new SpinAttack(boss.tickCount + 60, boss.tickCount,
@@ -320,13 +334,15 @@ public final class BossController {
 		if (boss.tickCount >= attack.nextWaveTick() && boss.tickCount < attack.endTick()) {
 			if (attack.megaBomb()) {
 				if (!attack.launchedMega()) {
-					throwBossBomb(level, boss, target.position(), 22.0, 500.0F);
+					throwBossBomb(level, boss, target.position().add(aimOffset(level, target)),
+							22.0, 500.0F);
 					attack = new SpinAttack(attack.endTick(), attack.endTick(), true, true);
 				}
 			} else {
 				for (int index = 0; index < 4; index++) {
 					double angle = Math.PI * 2 * index / 4 + level.getRandom().nextDouble() * 0.2;
-					Vec3 aim = target.position().add(Math.cos(angle) * 10, 0, Math.sin(angle) * 10);
+					Vec3 aim = target.position().add(aimOffset(level, target))
+							.add(Math.cos(angle) * 10, 0, Math.sin(angle) * 10);
 					throwBossBomb(level, boss, aim, 3.5, 16.0F + threat * 2.0F, false);
 				}
 				attack = new SpinAttack(attack.endTick(), attack.endTick(), false, false);
@@ -338,8 +354,8 @@ public final class BossController {
 		}
 	}
 
-	private static void throwEnragedGolem(ServerLevel level, Phantom boss, ServerPlayer target, int threat) {
-		IronGolem golem = ModEntities.SHIELD_GENERATOR_GOLEM.create(level, EntitySpawnReason.EVENT);
+	private static void throwEnragedGolem(ServerLevel level, SkyOverlord boss, ServerPlayer target, int threat) {
+		EnragedGolem golem = ModEntities.ENRAGED_GOLEM.create(level, EntitySpawnReason.EVENT);
 		if (golem == null) {
 			return;
 		}
@@ -347,25 +363,26 @@ public final class BossController {
 		golem.setPersistenceRequired();
 		golem.setCustomName(Component.literal("Sky Overlord's Enraged Golem"));
 		golem.setCustomNameVisible(true);
-		golem.setTarget(target);
 		double health = (100 + threat * 20) * BattleChickens.CONFIG.enemyHealthMultiplier();
 		golem.getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
 		golem.setHealth((float) health);
 		if (!level.addFreshEntity(golem)) {
 			return;
 		}
-		Vec3 throwDirection = target.getBoundingBox().getCenter().subtract(golem.position()).normalize();
+		golem.enrageOn(target);
+		Vec3 throwDirection = PurgeUnits.bossAimPosition(level, target)
+				.subtract(golem.position()).normalize();
 		golem.setDeltaMovement(throwDirection.scale(1.0).add(0, 0.65, 0));
 		level.sendParticles(ParticleTypes.CLOUD, boss.getX(), boss.getY(), boss.getZ(),
 				24, 0.8, 0.5, 0.8, 0.12);
 		showCombatAlert(target, Component.literal("Sky Overlord threw an Iron Golem!"));
 	}
 
-	private static void throwBossBomb(ServerLevel level, Phantom boss, Vec3 aim, double radius, float damage) {
+	private static void throwBossBomb(ServerLevel level, SkyOverlord boss, Vec3 aim, double radius, float damage) {
 		throwBossBomb(level, boss, aim, radius, damage, true);
 	}
 
-	private static void throwBossBomb(ServerLevel level, Phantom boss, Vec3 aim, double radius, float damage,
+	private static void throwBossBomb(ServerLevel level, SkyOverlord boss, Vec3 aim, double radius, float damage,
 			boolean mega) {
 		Vec3 direction = aim.subtract(boss.position()).normalize();
 		Vec3 side = new Vec3(direction.z, 0, -direction.x).normalize();
@@ -397,7 +414,7 @@ public final class BossController {
 		}
 	}
 
-	private static void tickFlyingBombs(ServerLevel level, Phantom boss, int threat) {
+	private static void tickFlyingBombs(ServerLevel level, SkyOverlord boss, int threat) {
 		List<FlyingBossBomb> bombs = FLYING_BOMBS.get(boss.getUUID());
 		if (bombs == null) {
 			return;
@@ -410,7 +427,7 @@ public final class BossController {
 				level.sendParticles(bomb.mega() ? ParticleTypes.FLAME : ParticleTypes.SMOKE,
 						bomb.entity().getX(), bomb.entity().getY(),
 						bomb.entity().getZ(), bomb.mega() ? 5 : 2, 0.1, 0.1, 0.1, 0.01);
-				if (bomb.mega()) {
+				if (bomb.mega() && !bomb.visualOnly() && boss.tickCount % 5 == 0) {
 					emitMark(level, bomb.entity().position(), bomb.radius());
 				}
 				return false;
@@ -441,7 +458,7 @@ public final class BossController {
 		}
 	}
 
-	private static void breakPhantomPathBlocks(ServerLevel level, Phantom boss, Vec3 direction) {
+	private static void breakPhantomPathBlocks(ServerLevel level, SkyOverlord boss, Vec3 direction) {
 		if (boss.tickCount % 5 != 0
 				|| !level.getGameRules().get(net.minecraft.world.level.gamerules.GameRules.MOB_GRIEFING)) {
 			return;
@@ -458,6 +475,10 @@ public final class BossController {
 					if (state.isAir() || level.getBlockEntity(pos) != null) {
 						continue;
 					}
+					if (!com.cluck.block.BunkerBlock.hasClearBlockPath(
+							level, boss.getEyePosition(), pos)) {
+						continue;
+					}
 					if (com.cluck.block.BunkerBlock.handleDestructionAttempt(null, level, pos, boss, 10)) {
 						broken++;
 					} else if (state.getDestroySpeed(level, pos) >= 0
@@ -469,7 +490,7 @@ public final class BossController {
 		}
 	}
 
-	private static void tickBoss(ServerLevel level, Ravager boss, List<ServerPlayer> players, int threat) {
+	private static void tickBoss(ServerLevel level, OverlordBeast boss, List<ServerPlayer> players, int threat) {
 		List<IronGolem> generators = shieldGenerators(boss);
 		boss.setPermanentlyInvulnerable(false);
 		int shieldResistance = shieldResistanceAmplifier(generators);
@@ -514,6 +535,18 @@ public final class BossController {
 		tickGeneratorProjectiles(level, boss, threat);
 		tickSoulFlameZones(level, boss, threat);
 		tickLightningStrike(level, boss, target, threat);
+		if (boss.tickCount % 200 == 180) {
+			showCombatAlert(target, Component.literal(
+					"Overlord targeting drone inbound! Use flak or take cover!"));
+			level.sendParticles(ParticleTypes.ELECTRIC_SPARK, boss.getX(), boss.getEyeY(),
+					boss.getZ(), 16, 0.5, 0.25, 0.5, 0.12);
+			level.playSound(null, boss.blockPosition(), net.minecraft.sounds.SoundEvents.NOTE_BLOCK_PLING.value(),
+					net.minecraft.sounds.SoundSource.HOSTILE, 1.2F, 0.6F);
+		}
+		if (boss.tickCount % 200 == 0 && PurgeUnits.launchDrone(level, boss, target)) {
+			level.sendParticles(ParticleTypes.FLAME, boss.getX(), boss.getEyeY(), boss.getZ(),
+					12, 0.3, 0.2, 0.3, 0.08);
+		}
 		if (boss.tickCount % 120 == 0) {
 			PurgeUnits.spawnRavagerMilitia(level, boss, target, threat);
 		}
@@ -529,6 +562,8 @@ public final class BossController {
 								+ toRoman(shieldResistance + 1) + ". Destroy it!"));
 			}
 			if (boss.tickCount % 50 == 0 && boss.distanceToSqr(target) < 20 * 20
+					&& PurgeUnits.bossAimPosition(level, target)
+							.distanceToSqr(target.getBoundingBox().getCenter()) <= 3 * 3
 					&& PurgeUnits.hasClearAttackPath(level, boss, target)) {
 				target.hurtServer(level, level.damageSources().mobAttack(boss),
 						(10 + threat * 2) * BattleChickens.CONFIG.enemyDamageMultiplier());
@@ -543,9 +578,11 @@ public final class BossController {
 						boss.getZ(), 16, 0.5, 0.2, 0.5, 0.02);
 			}
 			if (boss.tickCount % 100 == 0 && boss.distanceToSqr(target) < 24 * 24) {
-				Vec3 charge = target.position().subtract(boss.position()).normalize();
+				Vec3 chargeAim = target.position().add(aimOffset(level, target));
+				Vec3 charge = chargeAim.subtract(boss.position()).normalize();
 				boss.setDeltaMovement(charge.scale(1.8).add(0, 0.18, 0));
 				if (boss.distanceToSqr(target) < 12 * 12
+						&& chargeAim.distanceToSqr(target.position()) <= 3 * 3
 						&& PurgeUnits.hasClearAttackPath(level, boss, target)) {
 					target.hurtServer(level, level.damageSources().mobAttack(boss),
 							(14 + threat * 2) * BattleChickens.CONFIG.enemyDamageMultiplier());
@@ -568,21 +605,19 @@ public final class BossController {
 		} else {
 			int orbitalTick = boss.tickCount % 120;
 			if (orbitalTick == 0) {
-				ORBITAL_MARKS.put(boss.getUUID(), target.position());
+				if (level.canSeeSky(target.blockPosition())) {
+					ORBITAL_MARKS.put(boss.getUUID(), target.position().add(aimOffset(level, target)));
+				} else {
+					ORBITAL_MARKS.remove(boss.getUUID());
+				}
 			}
-			if (orbitalTick < 40) {
-				Vec3 impact = ORBITAL_MARKS.computeIfAbsent(boss.getUUID(), ignored -> target.position());
-				for (int step = 0; step < 24; step++) {
-					double angle = Math.PI * 2 * step / 24;
-					level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-							impact.x + Math.cos(angle) * 7, impact.y + 0.1,
-							impact.z + Math.sin(angle) * 7, 1, 0, 0, 0, 0);
-				}
-				if (boss.tickCount % 120 == 0) {
-					showCombatAlert(target, Component.literal("Orbital strike locked — leave the marked zone!"));
-				}
-			} else if (orbitalTick == 40) {
-				Vec3 impact = ORBITAL_MARKS.getOrDefault(boss.getUUID(), target.position());
+			Vec3 impact = ORBITAL_MARKS.get(boss.getUUID());
+			boolean canHit = impact != null && level.canSeeSky(BlockPos.containing(impact))
+					&& PurgeUnits.hasBlastExposure(level, impact, target);
+			if (orbitalTick < 40 && canHit && boss.tickCount % 120 == 0) {
+				showCombatAlert(target, Component.literal("Orbital strike incoming — get under cover!"));
+			}
+			if (orbitalTick == 40 && canHit) {
 				level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 1, impact.z, 1, 0, 0, 0, 0);
 				for (LivingEntity victim : level.getEntitiesOfClass(LivingEntity.class,
 						new AABB(impact, impact).inflate(7), entity -> entity != boss && entity.isAlive() && !isGenerator(entity))) {
@@ -597,31 +632,38 @@ public final class BossController {
 				}
 				PurgeUnits.destroyBossImpact(level, impact, boss);
 				PurgeUnits.spawnBossReinforcements(level, boss, target, threat);
+			}
+			if (orbitalTick == 40) {
 				ORBITAL_MARKS.remove(boss.getUUID());
 			}
 		}
 	}
 
-	private static void tickRavagerMelee(ServerLevel level, Ravager boss, ServerPlayer target, int threat) {
+	private static void tickRavagerMelee(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		double reach = boss.getBbWidth() * 0.5 + 1.5;
-		if (boss.distanceToSqr(target) <= reach * reach && boss.tickCount % 20 == 0) {
-			target.hurtServer(level, level.damageSources().mobAttack(boss),
-					(10 + threat * 2) * BattleChickens.CONFIG.enemyDamageMultiplier());
-			Vec3 shove = target.position().subtract(boss.position()).normalize();
-			applyDaySevenKnockback(target, shove.scale(0.45).add(0, 0.25, 0));
-			level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1, target.getZ(),
-					14, 0.5, 0.4, 0.5, 0.08);
+		if (boss.distanceToSqr(target) <= reach * reach && boss.tickCount % 20 == 0
+				&& PurgeUnits.bossAimPosition(level, target)
+						.distanceToSqr(target.getBoundingBox().getCenter()) <= reach * reach) {
+			if (target.hurtServer(level, level.damageSources().mobAttack(boss),
+					(10 + threat * 2) * BattleChickens.CONFIG.enemyDamageMultiplier())) {
+				Vec3 shove = target.position().subtract(boss.position()).normalize();
+				applyDaySevenKnockback(target, shove.scale(0.45).add(0, 0.25, 0));
+				level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1, target.getZ(),
+						14, 0.5, 0.4, 0.5, 0.08);
+			}
 		}
 	}
 
-	private static void tickRavagerCharge(ServerLevel level, Ravager boss, ServerPlayer target) {
+	private static void tickRavagerCharge(ServerLevel level, OverlordBeast boss, ServerPlayer target) {
 		RavagerCharge charge = RAVAGER_CHARGES.get(boss.getUUID());
 		if (charge == null && boss.tickCount > 100 && boss.tickCount % 300 == 0
 				&& !RAVAGER_JUMPS.containsKey(boss.getUUID())
 				&& !BOULDER_WARNINGS.containsKey(boss.getUUID())
 				&& !BOULDER_VOLLEYS.containsKey(boss.getUUID())
-				&& !SONIC_BOOMS.containsKey(boss.getUUID())) {
-			charge = new RavagerCharge(target.position(), boss.tickCount + 100);
+				&& !SONIC_BOOMS.containsKey(boss.getUUID())
+				&& PurgeUnits.hasClearAttackPath(level, boss, target)) {
+			charge = new RavagerCharge(target.position().add(aimOffset(level, target)),
+					boss.tickCount + 100);
 			RAVAGER_CHARGES.put(boss.getUUID(), charge);
 			boss.getNavigation().stop();
 			showCombatAlert(target, Component.literal(
@@ -633,8 +675,6 @@ public final class BossController {
 			return;
 		}
 		if (boss.tickCount < charge.launchAt) {
-			level.sendParticles(ParticleTypes.FLAME, charge.aim.x, charge.aim.y + 0.1, charge.aim.z,
-					5, 1.2, 0.1, 1.2, 0.01);
 			return;
 		}
 		if (charge.direction == null) {
@@ -663,7 +703,7 @@ public final class BossController {
 		}
 	}
 
-	private static void tickBoulderToss(ServerLevel level, Ravager boss, ServerPlayer target) {
+	private static void tickBoulderToss(ServerLevel level, OverlordBeast boss, ServerPlayer target) {
 		UUID bossId = boss.getUUID();
 		BoulderWarning warning = BOULDER_WARNINGS.get(bossId);
 		if (warning == null && boss.tickCount > 100
@@ -671,34 +711,42 @@ public final class BossController {
 				&& !RAVAGER_CHARGES.containsKey(bossId)
 				&& !RAVAGER_JUMPS.containsKey(bossId)
 				&& !BOULDER_VOLLEYS.containsKey(bossId)
-				&& !SONIC_BOOMS.containsKey(bossId)) {
-			Vec3 aim = target.position().add(target.getDeltaMovement().scale(8));
+				&& !SONIC_BOOMS.containsKey(bossId)
+				&& level.canSeeSky(target.blockPosition())) {
+			Vec3 aim = target.position().add(target.getDeltaMovement().scale(8))
+					.add(aimOffset(level, target));
 			warning = new BoulderWarning(aim, boss.tickCount + 60);
 			BOULDER_WARNINGS.put(bossId, warning);
 			BOULDER_COOLDOWNS.put(bossId, boss.tickCount + 240);
 			boss.getNavigation().stop();
-			showCombatAlert(target, Component.literal("The Overlord tears up the ground — dodge the boulder!"));
+			showCombatAlert(target, Component.literal("Anvil rain incoming — move out of the landing zone!"));
 			level.playSound(null, boss.blockPosition(), net.minecraft.sounds.SoundEvents.RAVAGER_ROAR,
 					net.minecraft.sounds.SoundSource.HOSTILE, 3.0F, 0.8F);
 		}
 		if (warning == null) {
 			return;
 		}
-		for (int step = 0; step < 32; step++) {
-			double offset = -1.5 + 3.0 * step / 31.0;
-			for (double edge : new double[]{-1.5, 1.5}) {
-				sendLandingMarker(level, warning.target().x + offset, warning.target().z + edge);
-				sendLandingMarker(level, warning.target().x + edge, warning.target().z + offset);
+		if (!level.canSeeSky(target.blockPosition())) {
+			BOULDER_WARNINGS.remove(bossId);
+			return;
+		}
+		if (boss.tickCount % 5 == 0) {
+			for (int step = 0; step < 8; step++) {
+				double offset = -1.5 + 3.0 * step / 7.0;
+				for (double edge : new double[]{-1.5, 1.5}) {
+					sendLandingMarker(level, warning.target().x + offset, warning.target().z + edge, target);
+					sendLandingMarker(level, warning.target().x + edge, warning.target().z + offset, target);
+				}
 			}
 		}
 		if (boss.tickCount < warning.launchAt()) {
 			return;
 		}
 		BOULDER_WARNINGS.remove(bossId);
-		launchBoulder(level, boss, warning.target(), target);
+		launchBoulder(level, boss, warning.target());
 	}
 
-	private static void launchBoulder(ServerLevel level, Ravager boss, Vec3 targetPosition, ServerPlayer target) {
+	private static void launchBoulder(ServerLevel level, OverlordBeast boss, Vec3 targetPosition) {
 		List<FallingBlockEntity> anvils = new ArrayList<>(9);
 		for (int xOffset = -1; xOffset <= 1; xOffset++) {
 			for (int zOffset = -1; zOffset <= 1; zOffset++) {
@@ -720,24 +768,24 @@ public final class BossController {
 			}
 		}
 		if (anvils.isEmpty()) {
-			showCombatAlert(target, Component.literal("The Overlord's anvil barrage was blocked overhead!"));
 			return;
 		}
 		BOULDER_VOLLEYS.put(boss.getUUID(), new BoulderVolley(anvils));
 		level.playSound(null, boss.blockPosition(), net.minecraft.sounds.SoundEvents.ANVIL_LAND,
 				net.minecraft.sounds.SoundSource.HOSTILE, 3.0F, 0.65F);
-		showCombatAlert(target, Component.literal(
-				"The Overlord calls down a 3x3 anvil barrage — leave the marked landing zone!"));
 	}
 
-	private static void sendLandingMarker(ServerLevel level, double x, double z) {
+	private static void sendLandingMarker(ServerLevel level, double x, double z, ServerPlayer target) {
 		int blockX = BlockPos.containing(x, level.getMinY(), z).getX();
 		int blockZ = BlockPos.containing(x, level.getMinY(), z).getZ();
 		int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, blockX, blockZ);
-		level.sendParticles(ParticleTypes.CRIT, x, y + 0.1, z, 1, 0, 0, 0, 0);
+		Vec3 landing = new Vec3(x, y, z);
+		if (PurgeUnits.hasBlastExposure(level, landing, target)) {
+			level.sendParticles(ParticleTypes.CRIT, x, y + 0.1, z, 1, 0, 0, 0, 0);
+		}
 	}
 
-	private static void tickBoulderVolley(ServerLevel level, Ravager boss, int threat) {
+	private static void tickBoulderVolley(ServerLevel level, OverlordBeast boss, int threat) {
 		BoulderVolley volley = BOULDER_VOLLEYS.get(boss.getUUID());
 		if (volley == null) {
 			return;
@@ -767,7 +815,7 @@ public final class BossController {
 		}
 	}
 
-	private static void detonateBoulder(ServerLevel level, Ravager boss, Vec3 impact, int threat) {
+	private static void detonateBoulder(ServerLevel level, OverlordBeast boss, Vec3 impact, int threat) {
 		BoulderVolley volley = BOULDER_VOLLEYS.remove(boss.getUUID());
 		if (volley != null) {
 			volley.anvils.forEach(FallingBlockEntity::discard);
@@ -798,28 +846,23 @@ public final class BossController {
 				net.minecraft.sounds.SoundSource.HOSTILE, 6.0F, 0.55F);
 	}
 
-	private static void tickRavagerJump(ServerLevel level, Ravager boss, ServerPlayer target, int threat) {
+	private static void tickRavagerJump(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		RavagerJump jump = RAVAGER_JUMPS.get(boss.getUUID());
 		if (jump == null && boss.tickCount > 100 && boss.tickCount % 420 == 0
 				&& !RAVAGER_CHARGES.containsKey(boss.getUUID())
 				&& !BOULDER_WARNINGS.containsKey(boss.getUUID())
 				&& !BOULDER_VOLLEYS.containsKey(boss.getUUID())
-				&& !SONIC_BOOMS.containsKey(boss.getUUID())) {
-			jump = new RavagerJump(target.position(), boss.tickCount + 30, boss.tickCount + 65, false);
+				&& !SONIC_BOOMS.containsKey(boss.getUUID())
+				&& PurgeUnits.hasClearAttackPath(level, boss, target)
+				&& level.canSeeSky(target.blockPosition())) {
+			jump = new RavagerJump(target.position().add(aimOffset(level, target)),
+					boss.tickCount + 30, boss.tickCount + 65, false);
 			RAVAGER_JUMPS.put(boss.getUUID(), jump);
 			boss.getNavigation().stop();
 			showCombatAlert(target, Component.literal("Ravager leaping — leave the marked zone!"));
 		}
 		if (jump == null) {
 			return;
-		}
-		if (!jump.launched() && boss.tickCount % 5 == 0) {
-			for (int step = 0; step < 20; step++) {
-				double angle = Math.PI * 2 * step / 20;
-				level.sendParticles(ParticleTypes.CRIT, jump.landing().x + Math.cos(angle) * 5,
-						jump.landing().y + 0.1, jump.landing().z + Math.sin(angle) * 5,
-						1, 0, 0, 0, 0);
-			}
 		}
 		if (!jump.launched() && boss.tickCount >= jump.launchAt()) {
 			Vec3 landing = jump.landing();
@@ -831,8 +874,13 @@ public final class BossController {
 		if (jump.launched() && (boss.tickCount >= jump.impactAt()
 				|| (boss.tickCount > jump.launchAt() + 5 && boss.onGround()))) {
 			Vec3 landing = jump.landing();
-			level.sendParticles(ParticleTypes.EXPLOSION, landing.x, landing.y + 0.5, landing.z,
-					4, 1.5, 0.5, 1.5, 0.1);
+			if (level.canSeeSky(BlockPos.containing(landing))
+					&& level.canSeeSky(target.blockPosition())
+					&& target.distanceToSqr(landing) <= 6.0 * 6.0
+					&& PurgeUnits.hasBlastExposure(level, landing, target)) {
+				level.sendParticles(ParticleTypes.EXPLOSION, landing.x, landing.y + 0.5, landing.z,
+						4, 1.5, 0.5, 1.5, 0.1);
+			}
 			for (LivingEntity victim : level.getEntitiesOfClass(LivingEntity.class,
 					new AABB(landing, landing).inflate(6), entity -> entity != boss && entity.isAlive() && !isGenerator(entity))) {
 				if (!PurgeUnits.hasBlastExposure(level, landing, victim)) {
@@ -848,15 +896,16 @@ public final class BossController {
 		}
 	}
 
-	private static void tickSonicBoom(ServerLevel level, Ravager boss, ServerPlayer target, int threat) {
+	private static void tickSonicBoom(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		SonicBoom attack = SONIC_BOOMS.get(boss.getUUID());
 		if (attack == null && !SONIC_BOOM_USED.contains(boss.getUUID())
 				&& boss.tickCount > 100 && boss.tickCount % 240 == 0
 				&& !RAVAGER_CHARGES.containsKey(boss.getUUID())
 				&& !RAVAGER_JUMPS.containsKey(boss.getUUID())
 				&& !BOULDER_WARNINGS.containsKey(boss.getUUID())
-				&& !BOULDER_VOLLEYS.containsKey(boss.getUUID())) {
-			attack = new SonicBoom(target.getUUID(), boss.tickCount + 100);
+				&& !BOULDER_VOLLEYS.containsKey(boss.getUUID())
+				&& PurgeUnits.hasClearAttackPath(level, boss, target)) {
+			attack = new SonicBoom(PurgeUnits.bossAimPosition(level, target), boss.tickCount + 100);
 			SONIC_BOOMS.put(boss.getUUID(), attack);
 			SONIC_BOOM_USED.add(boss.getUUID());
 			showCombatAlert(target, Component.literal(
@@ -867,30 +916,21 @@ public final class BossController {
 		if (attack == null) {
 			return;
 		}
-		UUID targetId = attack.target();
-		ServerPlayer markedTarget = playersInLevel(level).stream()
-				.filter(player -> player.getUUID().equals(targetId) && player.isAlive())
-				.findFirst().orElse(target);
-		Vec3 aim = markedTarget.getBoundingBox().getCenter();
+		Vec3 aim = attack.aim();
 		Vec3 direction = aim.subtract(boss.getEyePosition()).normalize();
 		Vec3 origin = boss.getEyePosition().add(direction.scale(3.0));
 		if (boss.tickCount < attack.fireAt()) {
-			if (boss.tickCount % 5 == 0) {
-				Vec3 telegraph = boss.getEyePosition();
-				double length = Math.min(128, aim.distanceTo(telegraph));
-				for (double distance = 3; distance < length; distance += 4) {
-					Vec3 point = telegraph.add(direction.scale(distance));
-					level.sendParticles(ParticleTypes.SONIC_BOOM, point.x, point.y, point.z,
-							1, 0, 0, 0, 0);
-				}
-				level.sendParticles(ParticleTypes.ELECTRIC_SPARK, aim.x, aim.y,
-						aim.z, 6, 0.8, 0.3, 0.8, 0.02);
-			}
 			return;
 		}
 		double beamLength = Math.min(128, aim.distanceTo(origin));
 		for (double distance = 0; distance <= beamLength; distance += 1.5) {
 			Vec3 point = origin.add(direction.scale(distance));
+			if (level.clip(new net.minecraft.world.level.ClipContext(
+					origin, point, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+					net.minecraft.world.level.ClipContext.Fluid.NONE, boss)).getType()
+					!= HitResult.Type.MISS) {
+				break;
+			}
 			level.sendParticles(ParticleTypes.SONIC_BOOM, point.x, point.y, point.z, 1, 0, 0, 0, 0);
 		}
 		for (LivingEntity victim : level.getEntitiesOfClass(LivingEntity.class, boss.getBoundingBox().inflate(128),
@@ -922,12 +962,12 @@ public final class BossController {
 		}
 	}
 
-	private static void tickGenerators(ServerLevel level, Ravager boss, List<IronGolem> generators,
+	private static void tickGenerators(ServerLevel level, OverlordBeast boss, List<IronGolem> generators,
 			ServerPlayer target) {
 		for (int index = 0; index < generators.size(); index++) {
 			IronGolem generator = generators.get(index);
-			if (!generator.isLeashed()) {
-				generator.setLeashedTo(boss, true);
+			if (generator.isLeashed()) {
+				generator.removeLeash();
 			}
 			double angle = boss.tickCount * 0.01 + Math.PI * 2 * index / Math.max(1, generators.size());
 			double orbitRadius = 12.0;
@@ -953,7 +993,7 @@ public final class BossController {
 		}
 	}
 
-	private static void tickGeneratorProjectiles(ServerLevel level, Ravager boss, int threat) {
+	private static void tickGeneratorProjectiles(ServerLevel level, OverlordBeast boss, int threat) {
 		List<GeneratorPulse> pulses = GENERATOR_PROJECTILES.get(boss.getUUID());
 		if (pulses == null) {
 			return;
@@ -974,7 +1014,7 @@ public final class BossController {
 					net.minecraft.world.level.ClipContext.Fluid.NONE, boss));
 			Vec3 end = obstruction.getType() == HitResult.Type.MISS ? next : obstruction.getLocation();
 			boolean hitTarget = target.getBoundingBox().inflate(0.35).clip(start, end).isPresent();
-			level.sendParticles(new DustParticleOptions(0xE32424, 1.5F),
+			level.sendParticles(new DustParticleOptions(0x2488FF, 1.5F),
 					(start.x + end.x) * 0.5, (start.y + end.y) * 0.5, (start.z + end.z) * 0.5,
 					3, 0.04, 0.04, 0.04, 0);
 			if (hitTarget || obstruction.getType() != HitResult.Type.MISS) {
@@ -1001,7 +1041,7 @@ public final class BossController {
 		}
 	}
 
-	private static Vec3 findClearGeneratorPosition(ServerLevel level, IronGolem generator, Ravager boss,
+	private static Vec3 findClearGeneratorPosition(ServerLevel level, IronGolem generator, OverlordBeast boss,
 			int index, int generatorCount) {
 		for (int radius : new int[]{10, 12, 14, 16}) {
 			for (int step = 0; step < 16; step++) {
@@ -1025,9 +1065,12 @@ public final class BossController {
 	}
 
 	private static void fireGeneratorPulse(ServerLevel level, IronGolem generator, ServerPlayer target,
-			Ravager boss) {
+			OverlordBeast boss) {
+		if (!PurgeUnits.hasClearAttackPath(level, generator, target)) {
+			return;
+		}
 		Vec3 start = generator.getEyePosition();
-		Vec3 targetPosition = target.getBoundingBox().getCenter();
+		Vec3 targetPosition = PurgeUnits.bossAimPosition(level, target);
 		Vec3 direction = targetPosition.subtract(start).normalize();
 		GENERATOR_PROJECTILES.computeIfAbsent(boss.getUUID(), ignored -> new ArrayList<>())
 				.add(new GeneratorPulse(target.getUUID(), start, direction, 0));
@@ -1038,7 +1081,7 @@ public final class BossController {
 				net.minecraft.sounds.SoundSource.HOSTILE, 1.4F, 0.8F);
 	}
 
-	private static void addSoulFlameZone(ServerLevel level, Ravager boss, Vec3 impact) {
+	private static void addSoulFlameZone(ServerLevel level, OverlordBeast boss, Vec3 impact) {
 		int x = net.minecraft.core.BlockPos.containing(impact).getX();
 		int z = net.minecraft.core.BlockPos.containing(impact).getZ();
 		int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
@@ -1053,7 +1096,7 @@ public final class BossController {
 				40, 1.2, 0.1, 1.2, 0.06);
 	}
 
-	private static void tickSoulFlameZones(ServerLevel level, Ravager boss, int threat) {
+	private static void tickSoulFlameZones(ServerLevel level, OverlordBeast boss, int threat) {
 		UUID bossId = boss.getUUID();
 		List<SoulFlameZone> zones = SOUL_FLAME_ZONES.get(bossId);
 		if (zones == null) {
@@ -1088,11 +1131,11 @@ public final class BossController {
 		}
 	}
 
-	private static void breakPathBlocks(ServerLevel level, Ravager boss, ServerPlayer target) {
+	private static void breakPathBlocks(ServerLevel level, OverlordBeast boss, ServerPlayer target) {
 		breakPathBlocks(level, boss, target.position().subtract(boss.position()));
 	}
 
-	private static void breakPathBlocks(ServerLevel level, Ravager boss, Vec3 direction) {
+	private static void breakPathBlocks(ServerLevel level, OverlordBeast boss, Vec3 direction) {
 		if (boss.tickCount % 5 != 0
 				|| !level.getGameRules().get(net.minecraft.world.level.gamerules.GameRules.MOB_GRIEFING)) {
 			return;
@@ -1116,6 +1159,10 @@ public final class BossController {
 					if (state.isAir() || level.getBlockEntity(pos) != null) {
 						continue;
 					}
+					if (!com.cluck.block.BunkerBlock.hasClearBlockPath(
+							level, boss.getEyePosition(), pos)) {
+						continue;
+					}
 					if (com.cluck.block.BunkerBlock.handleDestructionAttempt(null, level, pos, boss, 10)) {
 						broken++;
 					} else if (state.getDestroySpeed(level, pos) >= 0
@@ -1127,7 +1174,7 @@ public final class BossController {
 		}
 	}
 
-	private static void recoverStuckBoss(ServerLevel level, Ravager boss, ServerPlayer target) {
+	private static void recoverStuckBoss(ServerLevel level, OverlordBeast boss, ServerPlayer target) {
 		PursuitState state = PURSUIT_STATES.computeIfAbsent(boss.getUUID(),
 				ignored -> new PursuitState(boss.position()));
 		if (state.lastPosition.distanceToSqr(boss.position()) < 0.2 * 0.2) {
@@ -1154,10 +1201,14 @@ public final class BossController {
 		state.lastTeleportTick = boss.tickCount;
 	}
 
-	private static void tickLightningStrike(ServerLevel level, Ravager boss, ServerPlayer target, int threat) {
+	private static void tickLightningStrike(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		LightningChase strike = LIGHTNING_MARKS.get(boss.getUUID());
-		if (strike == null && boss.tickCount % 200 == 0) {
+		if (strike == null && boss.tickCount % 200 == 0 && level.canSeeSky(target.blockPosition())) {
 			Vec3 markedPosition = target.position().add(target.getDeltaMovement().scale(6));
+			markedPosition = markedPosition.add(aimOffset(level, target));
+			if (!level.canSeeSky(BlockPos.containing(markedPosition))) {
+				return;
+			}
 			strike = new LightningChase(markedPosition, boss.tickCount + 30);
 			LIGHTNING_MARKS.put(boss.getUUID(), strike);
 			showCombatAlert(target, Component.literal("Lightning marked — leave the ring!"));
@@ -1166,7 +1217,11 @@ public final class BossController {
 			return;
 		}
 		Vec3 impact = strike.impact();
-		emitLightningWarning(level, impact);
+		if (!level.canSeeSky(BlockPos.containing(impact))
+				|| !level.canSeeSky(target.blockPosition())) {
+			LIGHTNING_MARKS.remove(boss.getUUID());
+			return;
+		}
 		if (boss.tickCount < strike.strikeTick()) {
 			return;
 		}
@@ -1203,29 +1258,38 @@ public final class BossController {
 		LIGHTNING_MARKS.remove(boss.getUUID());
 	}
 
-	private static void emitLightningWarning(ServerLevel level, Vec3 center) {
-		for (int step = 0; step < 24; step++) {
-			double angle = Math.PI * 2 * step / 24;
-			double radius = 3.0;
-			level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-					center.x + Math.cos(angle) * radius, center.y + 0.1,
-					center.z + Math.sin(angle) * radius, 2, 0, 0, 0, 0);
-		}
-		level.sendParticles(ParticleTypes.ELECTRIC_SPARK, center.x, center.y + 0.2, center.z,
-				4, 0.35, 0.1, 0.35, 0.02);
-	}
-
 	private static List<ServerPlayer> playersInLevel(ServerLevel level) {
 		return level.getServer().getPlayerList().getPlayers().stream()
 				.filter(player -> player.level() == level).toList();
 	}
 
 	public static void showCombatAlert(ServerPlayer player, Component message) {
+		String text = message.getString().toLowerCase(java.util.Locale.ROOT);
+		if (!(text.contains("rocket barrage")
+				|| text.contains("bombardment")
+				|| text.contains("mega-bomb run")
+				|| text.contains("orbital strike incoming")
+				|| text.contains("lightning marked")
+				|| text.contains("anvil rain incoming")
+				|| text.contains("grenadier bomb incoming")
+				|| text.contains("has you in its sights")
+				|| text.contains("ravager charge!")
+				|| text.contains("ravager leaping")
+				|| text.contains("channels a sonic boom")
+				|| text.contains("shield pulse incoming")
+				|| text.contains("targeting drone inbound"))) {
+			return;
+		}
 		player.sendSystemMessage(message, true);
 	}
 
+	private static Vec3 aimOffset(ServerLevel level, ServerPlayer target) {
+		return PurgeUnits.bossAimPosition(level, target).subtract(target.getBoundingBox().getCenter());
+	}
+
 	private static void fireRocket(ServerLevel level, LivingEntity boss, ServerPlayer target, double spread) {
-		Vec3 direction = target.getBoundingBox().getCenter().subtract(boss.getEyePosition());
+		Vec3 aim = PurgeUnits.bossAimPosition(level, target);
+		Vec3 direction = aim.subtract(boss.getEyePosition());
 		if (spread != 0) {
 			Vec3 side = new Vec3(direction.z, 0, -direction.x).normalize().scale(spread);
 			direction = direction.add(side);
@@ -1253,11 +1317,11 @@ public final class BossController {
 			return -1;
 		}
 		float ratio = strongest.getHealth() / Math.max(1.0F, strongest.getMaxHealth());
-		return Math.min(4, Math.max(0, (int) Math.ceil(ratio * 5.0F) - 1));
+		return Math.min(3, Math.max(0, (int) Math.ceil(ratio * 4.0F) - 1));
 	}
 
 	public static List<IronGolem> shieldGenerators(Entity bossEntity) {
-		if (!(bossEntity instanceof Ravager boss) || !(boss.level() instanceof ServerLevel level)) {
+		if (!(bossEntity instanceof OverlordBeast boss) || !(boss.level() instanceof ServerLevel level)) {
 			return List.of();
 		}
 		return level.getEntitiesOfClass(IronGolem.class, boss.getBoundingBox().inflate(128),
@@ -1275,7 +1339,7 @@ public final class BossController {
 		};
 	}
 
-	private static void teleportBossNearPlayer(ServerLevel level, Ravager boss, ServerPlayer target,
+	private static void teleportBossNearPlayer(ServerLevel level, OverlordBeast boss, ServerPlayer target,
 			List<IronGolem> generators) {
 		double angle = target.getYRot() * (Math.PI / 180.0) + (level.getRandom().nextDouble() - 0.5) * 0.5;
 		double distance = 50.0 + level.getRandom().nextDouble() * 20.0;
@@ -1306,13 +1370,12 @@ public final class BossController {
 					(int) Math.floor(gx), (int) Math.floor(gz));
 			gen.teleportTo(gx, gy, gz);
 			gen.setDeltaMovement(Vec3.ZERO);
-			gen.setLeashedTo(boss, true);
 		}
 
 		showCombatAlert(target, Component.literal("The Overlord teleports to cut off your escape!"));
 	}
 
-	private static void teleportAerialBossNearPlayer(ServerLevel level, Phantom boss, ServerPlayer target) {
+	private static void teleportAerialBossNearPlayer(ServerLevel level, SkyOverlord boss, ServerPlayer target) {
 		double angle = target.getYRot() * (Math.PI / 180.0) + (level.getRandom().nextDouble() - 0.5) * 0.5;
 		double distance = 50.0 + level.getRandom().nextDouble() * 20.0;
 		double tx = target.getX() - Math.sin(angle) * distance;
@@ -1345,7 +1408,11 @@ public final class BossController {
 			return;
 		}
 		ORBITAL_MARKS.remove(entity.getUUID());
-		BOMB_MARKS.remove(entity.getUUID());
+		List<MarkedBomb> markedBombs = BOMB_MARKS.remove(entity.getUUID());
+		if (markedBombs != null) {
+			markedBombs.stream().map(MarkedBomb::projectile).filter(java.util.Objects::nonNull)
+					.forEach(ItemEntity::discard);
+		}
 		LIGHTNING_MARKS.remove(entity.getUUID());
 		SONIC_BOOM_USED.remove(entity.getUUID());
 		SPIN_ATTACKS.remove(entity.getUUID());

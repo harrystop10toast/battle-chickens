@@ -11,6 +11,14 @@ public final class BattleChickensClient implements ClientModInitializer {
 			EntityRendererRegistry.register(type, ChickenRoleRenderer::new);
 		}
 		EntityRendererRegistry.register(ModEntities.SHIELD_GENERATOR_GOLEM, ShieldGeneratorRenderer::new);
+		EntityRendererRegistry.register(ModEntities.ENRAGED_GOLEM, EnragedGolemRenderer::new);
+		EntityRendererRegistry.register(ModEntities.ARMORED_TANK, ArmoredTankRenderer::new);
+		EntityRendererRegistry.register(ModEntities.OVERLORD_BEAST, OverlordBeastRenderer::new);
+		EntityRendererRegistry.register(ModEntities.PURGE_DRONE, PurgeDroneRenderer::new);
+		EntityRendererRegistry.register(ModEntities.PURGE_GUNSHIP, PurgeGunshipRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SKY_OVERLORD, SkyOverlordRenderer::new);
+		EntityRendererRegistry.register(ModEntities.VETERAN_ROOSTER, VeteranRoosterRenderer::new);
 		ItemTooltipHandler.register();
+		NemesisTrophyTooltip.register();
 	}
 }

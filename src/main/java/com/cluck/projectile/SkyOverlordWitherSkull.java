@@ -36,7 +36,11 @@ public final class SkyOverlordWitherSkull extends WitherSkull {
 
 	private void detonateTerrain(ServerLevel level, HitResult result) {
 		Vec3 impact = result.getLocation();
-		level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y, impact.z, 1, 0, 0, 0, 0);
+		boolean bunkerImpact = result instanceof BlockHitResult blockHit
+				&& level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof BunkerBlock;
+		if (!bunkerImpact) {
+			level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y, impact.z, 1, 0, 0, 0, 0);
+		}
 		if (!level.getGameRules().get(GameRules.MOB_GRIEFING)) {
 			return;
 		}

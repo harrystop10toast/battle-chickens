@@ -1,8 +1,8 @@
 package com.cluck.block;
 
 import com.cluck.event.PurgeUnits;
+import com.cluck.item.BulletTracer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
@@ -66,14 +66,7 @@ public final class ScarecrowTurretBlock extends Block {
 				.orElse(null);
 		if (target != null) {
 			Vec3 destination = target.getBoundingBox().getCenter();
-			Vec3 direction = destination.subtract(origin);
-			double distance = direction.length();
-			Vec3 step = direction.normalize().scale(0.75);
-			for (double traveled = 0; traveled < distance; traveled += 0.75) {
-				Vec3 point = origin.add(step.scale(traveled / 0.75));
-				level.sendParticles(ParticleTypes.CRIT, point.x, point.y, point.z,
-						1, 0.02, 0.02, 0.02, 0);
-			}
+			BulletTracer.fire(level, origin, destination);
 			target.hurtServer(level, level.damageSources().arrow(null, null), 5);
 			level.setBlockAndUpdate(pos, state.setValue(AMMO, state.getValue(AMMO) - 1));
 		}

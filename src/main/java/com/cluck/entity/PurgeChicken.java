@@ -3,6 +3,9 @@ package com.cluck.entity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.server.level.ServerLevel;
@@ -27,6 +30,22 @@ public final class PurgeChicken extends Chicken {
 
 	public String role() {
 		return role;
+	}
+
+	@Override
+	public InteractionResult mobInteract(Player player, InteractionHand hand) {
+		if (!role.equals("giga_chicken")
+				|| !getItemBySlot(EquipmentSlot.SADDLE).is(Items.SADDLE)
+				|| player.isShiftKeyDown()) {
+			return super.mobInteract(player, hand);
+		}
+		if (isVehicle() || player.isPassenger()) {
+			return InteractionResult.PASS;
+		}
+		if (level().isClientSide()) {
+			return InteractionResult.CONSUME;
+		}
+		return player.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
 	}
 
 	@Override

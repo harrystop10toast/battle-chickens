@@ -6,12 +6,17 @@ import com.cluck.block.PurgeCoopBlock;
 import com.cluck.config.PurgeConfig;
 import com.cluck.event.PurgeUnits;
 import com.cluck.event.PurgeWorldData;
+import com.cluck.entity.PurgeDrone;
+import com.cluck.entity.PurgeGunship;
+import com.cluck.entity.SkyOverlord;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -19,8 +24,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.monster.Phantom;
-import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -32,14 +35,17 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class BattleTechItem extends Item {
 	public enum Ability {
@@ -53,8 +59,6 @@ public final class BattleTechItem extends Item {
 		ROOSTER_SPEAR,
 		FLAME_FRYER,
 		SNIPER_BEAK,
-		RIOT_HELMET,
-		REACTIVE_PLATING,
 		MEDIC_SYRINGE,
 		DRUMSTICK_OF_VALOR,
 		CLUCK_RADAR,
@@ -88,8 +92,6 @@ public final class BattleTechItem extends Item {
 			case ROOSTER_SPEAR -> roosterSpear(serverPlayer);
 			case FLAME_FRYER -> flameFryer(serverPlayer, hand);
 			case SNIPER_BEAK -> sniperBeak(serverPlayer);
-			case RIOT_HELMET -> riotHelmet(serverPlayer);
-			case REACTIVE_PLATING -> reactivePlating(serverPlayer);
 			case MEDIC_SYRINGE -> medicSyringe(serverPlayer);
 			case DRUMSTICK_OF_VALOR -> drumstick(serverPlayer);
 			case CLUCK_RADAR -> radar(serverPlayer);
@@ -125,7 +127,8 @@ public final class BattleTechItem extends Item {
 		AABB radius = player.getBoundingBox().inflate(12);
 		int disabled = 0;
 		for (Entity entity : level.getEntities(player, radius,
-				candidate -> PurgeUnits.isUnit(candidate) || candidate instanceof Phantom)) {
+				candidate -> PurgeUnits.isUnit(candidate) || candidate instanceof SkyOverlord
+						|| candidate instanceof PurgeGunship)) {
 			if (entity instanceof Mob mob) {
 				mob.getNavigation().stop();
 				mob.setTarget(null);
@@ -198,22 +201,64 @@ public final class BattleTechItem extends Item {
 
 	private boolean flak(ServerPlayer player) {
 		ServerLevel level = player.level();
-		LivingEntity target = level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(40),
-						entity -> (entity instanceof Phantom
-								|| entity instanceof Vex && PurgeUnits.isRewardedUnit(entity))
-								&& player.hasLineOfSight(entity))
-				.stream().min(Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
-		if (target == null) {
-			player.sendSystemMessage(Component.literal("No airborne target in range."));
-			return false;
-		}
 		if (!consume(player, ModItems.SCRAP_CIRCUIT)) {
 			player.sendSystemMessage(Component.literal("The Flak Cannon needs a Scrap Circuit charge."));
 			return false;
 		}
-		target.hurtServer(level, player.damageSources().playerAttack(player), 50);
-		level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY(), target.getZ(),
-				14, 0.5, 0.5, 0.5, 0.15);
+
+		Vec3 direction = player.getLookAngle().normalize();
+		Vec3 start = player.getEyePosition().add(direction.scale(0.45));
+		Vec3 right = direction.cross(new Vec3(0, 1, 0));
+		if (right.lengthSqr() < 0.001) {
+			right = direction.cross(new Vec3(1, 0, 0));
+		}
+		right = right.normalize();
+		Vec3 up = right.cross(direction).normalize();
+		double[][] spread = {
+				{0, 0}, {0.055, 0}, {-0.055, 0}, {0, 0.055}, {0, -0.055},
+				{0.04, 0.04}, {-0.04, -0.04}
+		};
+		double range = 20;
+		AABB search = player.getBoundingBox().expandTowards(direction.scale(range)).inflate(3);
+		var candidates = level.getEntities(player, search,
+				entity -> entity.isAlive() && (entity instanceof LivingEntity || entity instanceof PurgeDrone));
+		Map<Entity, Integer> hits = new HashMap<>();
+		for (double[] pellet : spread) {
+			Vec3 ray = direction.add(right.scale(pellet[0])).add(up.scale(pellet[1])).normalize();
+			Vec3 end = start.add(ray.scale(range));
+			var blockHit = level.clip(new ClipContext(start, end,
+					ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+			Vec3 traceEnd = blockHit.getType() == HitResult.Type.MISS
+					? end : blockHit.getLocation();
+			Entity hitTarget = null;
+			double closest = Double.MAX_VALUE;
+			for (Entity candidate : candidates) {
+				var entityHit = candidate.getBoundingBox().inflate(0.1).clip(start, traceEnd);
+				if (entityHit.isPresent()) {
+					double distance = start.distanceToSqr(entityHit.get());
+					if (distance < closest) {
+						closest = distance;
+						hitTarget = candidate;
+					}
+				}
+			}
+			BulletTracer.fire(level, start, traceEnd);
+			if (hitTarget != null) {
+				hits.merge(hitTarget, 1, Integer::sum);
+			}
+		}
+		for (Map.Entry<Entity, Integer> hit : hits.entrySet()) {
+			Entity target = hit.getKey();
+			if (target instanceof PurgeDrone drone) {
+				drone.intercept(level);
+			} else if (target instanceof LivingEntity livingTarget) {
+				float damagePerPellet = 3.5F
+						+ (livingTarget instanceof SkyOverlord || livingTarget instanceof PurgeGunship ? 0.5F : 0);
+				damage(player, livingTarget, damagePerPellet * hit.getValue());
+			}
+		}
+		level.playSound(null, player.blockPosition(), SoundEvents.CROSSBOW_SHOOT,
+				SoundSource.PLAYERS, 1.0F, 0.8F);
 		cooldown(player, 30);
 		return true;
 	}
@@ -247,17 +292,19 @@ public final class BattleTechItem extends Item {
 
 	private boolean beak47(ServerPlayer player) {
 		LivingEntity target = aimedTarget(player, 40);
-		if (target == null) {
-			return false;
-		}
 		if (!consume(player, Items.WHEAT_SEEDS)) {
 			player.sendSystemMessage(Component.literal("The Beak-47 needs wheat seeds."));
 			return false;
 		}
-		damage(player, target, 8);
 		ServerLevel level = player.level();
-		level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 0.6, target.getZ(),
-				4, 0.2, 0.25, 0.2, 0.05);
+		fireBullet(player, target, 40);
+		if (target != null) {
+			damage(player, target, 8);
+			level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 0.6, target.getZ(),
+					4, 0.2, 0.25, 0.2, 0.05);
+		}
+		level.playSound(null, player.blockPosition(), SoundEvents.CROSSBOW_SHOOT,
+				SoundSource.PLAYERS, 0.65F, 1.5F);
 		cooldown(player, 4);
 		return true;
 	}
@@ -267,7 +314,8 @@ public final class BattleTechItem extends Item {
 		if (target == null) {
 			return false;
 		}
-		damage(player, target, target instanceof Phantom || target instanceof Vex ? 18 : 12);
+		damage(player, target, target instanceof SkyOverlord || target instanceof PurgeGunship
+				? 18 : 12);
 		Vec3 direction = player.getLookAngle().normalize();
 		target.setDeltaMovement(target.getDeltaMovement().add(direction.scale(0.75)).add(0, 0.2, 0));
 		cooldown(player, 16);
@@ -325,22 +373,11 @@ public final class BattleTechItem extends Item {
 			player.sendSystemMessage(Component.literal("The Sniper Beak needs an arrow."));
 			return false;
 		}
+		fireBullet(player, target);
 		damage(player, target, 24);
 		player.level().sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1,
 				target.getZ(), 12, 0.15, 0.2, 0.15, 0.1);
 		cooldown(player, 80);
-		return true;
-	}
-
-	private boolean riotHelmet(ServerPlayer player) {
-		player.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 60, 0));
-		cooldown(player, 240);
-		return true;
-	}
-
-	private boolean reactivePlating(ServerPlayer player) {
-		player.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 100, 0));
-		cooldown(player, 400);
 		return true;
 	}
 
@@ -395,7 +432,7 @@ public final class BattleTechItem extends Item {
 	}
 
 	private boolean scrambler(ServerPlayer player) {
-		player.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 1200, 0, false, false));
+		player.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 600, 0, false, false));
 		cooldown(player, 2400);
 		return true;
 	}
@@ -452,6 +489,25 @@ public final class BattleTechItem extends Item {
 		if (amount > 0) {
 			target.hurtServer(player.level(), player.damageSources().playerAttack(player), amount);
 		}
+	}
+
+	private static void fireBullet(ServerPlayer player, LivingEntity target) {
+		fireBullet(player, target, 64);
+	}
+
+	private static void fireBullet(ServerPlayer player, LivingEntity target, double range) {
+		Vec3 direction = player.getLookAngle().normalize();
+		Vec3 start = player.getEyePosition().add(direction.scale(0.45));
+		Vec3 end;
+		if (target != null) {
+			end = target.getBoundingBox().getCenter();
+		} else {
+			Vec3 rangeEnd = start.add(direction.scale(range));
+			var hit = player.level().clip(new ClipContext(start, rangeEnd,
+					ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+			end = hit.getType() == HitResult.Type.MISS ? rangeEnd : hit.getLocation();
+		}
+		BulletTracer.fire(player.level(), start, end);
 	}
 
 	private static boolean consume(ServerPlayer player, Item item) {

@@ -3,7 +3,13 @@ package com.cluck.event;
 import com.cluck.BattleChickens;
 import com.cluck.block.PurgeCoopBlock;
 import com.cluck.entity.ModEntities;
+import com.cluck.entity.ArmoredTank;
+import com.cluck.entity.OverlordBeast;
+import com.cluck.entity.PurgeDrone;
+import com.cluck.entity.PurgeGunship;
+import com.cluck.entity.SkyOverlord;
 import com.cluck.entity.WarriorChicken;
+import com.cluck.item.BulletTracer;
 import com.cluck.item.ModItems;
 import com.cluck.projectile.PurgeRocketEntity;
 import net.minecraft.core.BlockPos;
@@ -17,15 +23,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.entity.animal.golem.IronGolem;
-import net.minecraft.world.entity.monster.Ravager;
-import net.minecraft.world.entity.monster.Phantom;
-import net.minecraft.world.entity.monster.Vex;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -45,9 +50,22 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class PurgeUnits {
-	private static final Map<UUID, Vec3> GRENADE_TARGETS = new HashMap<>();
+	private record GrenadeFlight(ItemEntity projectile, long detonationTick, Chicken bomber, int threat) {
+	}
+
+	private static final Map<UUID, GrenadeFlight> GRENADE_TARGETS = new HashMap<>();
 
 	private PurgeUnits() {
+	}
+
+	public static Vec3 bossAimPosition(ServerLevel level, ServerPlayer target) {
+		Vec3 position = target.getBoundingBox().getCenter();
+		if (!target.hasEffect(MobEffects.INVISIBILITY)) {
+			return position;
+		}
+		double angle = level.getRandom().nextDouble() * Math.PI * 2;
+		double distance = 5.0 + level.getRandom().nextDouble() * 5.0;
+		return position.add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
 	}
 
 	public static boolean hasBlastExposure(ServerLevel level, Vec3 origin, LivingEntity target) {
@@ -79,6 +97,40 @@ public final class PurgeUnits {
 				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, attacker)).getType() == HitResult.Type.MISS;
 	}
 
+	public static void tickBunkerSiege(ServerLevel level, List<ServerPlayer> players) {
+		if (level.getGameTime() % 20 != 0) {
+			return;
+		}
+		for (ServerPlayer player : players) {
+			if (player.level() != level || !player.isAlive()) {
+				continue;
+			}
+			for (Mob mob : level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(32),
+					candidate -> candidate.isAlive()
+							&& (candidate.getTarget() == player
+									|| candidate instanceof Chicken
+											&& (isUnit(candidate) || isWarrior(candidate)))
+							&& candidate.canAttack(player))) {
+				var obstruction = level.clip(new ClipContext(mob.getEyePosition(),
+						player.getBoundingBox().getCenter(), ClipContext.Block.COLLIDER,
+						ClipContext.Fluid.NONE, mob));
+				if (obstruction.getType() != HitResult.Type.BLOCK
+						|| !(level.getBlockState(obstruction.getBlockPos()).getBlock()
+								instanceof com.cluck.block.BunkerBlock)
+						|| mob.position().distanceToSqr(Vec3.atCenterOf(obstruction.getBlockPos()))
+								> Math.pow(mob.getBbWidth() * 0.5 + 1.5, 2)) {
+					continue;
+				}
+				var attackDamage = mob.getAttribute(Attributes.ATTACK_DAMAGE);
+				if (attackDamage != null) {
+					int bunkerDamage = Math.min(128, Math.max(1, (int) Math.ceil(attackDamage.getValue() * 2)));
+					com.cluck.block.BunkerBlock.handleDestructionAttempt(
+							null, level, obstruction.getBlockPos(), mob, bunkerDamage);
+				}
+			}
+		}
+	}
+
 	public static void spawnDailySupport(ServerPlayer player, PurgeWorldData data) {
 		ServerLevel level = player.level();
 		if (data.currentDay() >= 4 && level.getRandom().nextFloat() < 0.2F) {
@@ -86,9 +138,6 @@ public final class PurgeUnits {
 		}
 		if (data.currentDay() >= 5 && level.getRandom().nextFloat() < 0.12F) {
 			spawnMountedUnit(level, player);
-		}
-		if (data.currentDay() >= 6 && level.getRandom().nextFloat() < 0.15F) {
-			spawnDrone(level, player);
 		}
 	}
 
@@ -165,7 +214,7 @@ public final class PurgeUnits {
 	}
 
 	private static void spawnMountedUnit(ServerLevel level, ServerPlayer player) {
-		if (level.getEntitiesOfClass(Ravager.class, player.getBoundingBox().inflate(64),
+		if (level.getEntitiesOfClass(ArmoredTank.class, player.getBoundingBox().inflate(64),
 				entity -> hasName(entity, "Armored Ravager Tank")).size()
 				+ level.getEntitiesOfClass(IronGolem.class, player.getBoundingBox().inflate(64),
 				entity -> hasName(entity, "Golem Walker")).size() >= 2) {
@@ -177,7 +226,7 @@ public final class PurgeUnits {
 		int z = player.blockPosition().getZ() + (int) Math.round(Math.sin(angle) * distance);
 		int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
 		if (level.getRandom().nextBoolean()) {
-			Ravager tank = EntityTypes.RAVAGER.create(level, EntitySpawnReason.EVENT);
+			ArmoredTank tank = ModEntities.ARMORED_TANK.create(level, EntitySpawnReason.EVENT);
 			if (tank == null) {
 				return;
 			}
@@ -211,37 +260,25 @@ public final class PurgeUnits {
 		}
 	}
 
-	private static void spawnDrone(ServerLevel level, ServerPlayer player) {
-		if (level.getEntitiesOfClass(Vex.class, player.getBoundingBox().inflate(64),
-				entity -> hasName(entity, "Purge Drone")).size() >= 2) {
-			return;
+	public static boolean launchDrone(ServerLevel level, OverlordBeast boss, ServerPlayer target) {
+		if (!level.getEntitiesOfClass(PurgeDrone.class, boss.getBoundingBox().inflate(128),
+				drone -> drone.getOwner() == boss).isEmpty()) {
+			return false;
 		}
-		Vex drone = EntityTypes.VEX.create(level, EntitySpawnReason.EVENT);
+		PurgeDrone drone = ModEntities.PURGE_DRONE.create(level, EntitySpawnReason.EVENT);
 		if (drone == null) {
-			return;
+			return false;
 		}
-		double angle = level.getRandom().nextDouble() * Math.PI * 2;
-		int distance = 40 + level.getRandom().nextInt(25);
-		drone.setPos(player.getX() + Math.cos(angle) * distance,
-				player.getY() + 14, player.getZ() + Math.sin(angle) * distance);
-		drone.setPersistenceRequired();
-		drone.setCustomName(net.minecraft.network.chat.Component.literal("Purge Drone"));
-		drone.setCustomNameVisible(true);
-		drone.setTarget(player);
-		if (drone.getAttribute(Attributes.MAX_HEALTH) != null) {
-			drone.getAttribute(Attributes.MAX_HEALTH).setBaseValue(
-					20 * BattleChickens.CONFIG.enemyHealthMultiplier());
-			drone.setHealth((float) drone.getAttributeValue(Attributes.MAX_HEALTH));
-		}
-		level.addFreshEntity(drone);
+		drone.launch(boss, target);
+		return level.addFreshEntity(drone);
 	}
 
 	private static void spawnAerialUnit(ServerLevel level, ServerPlayer player) {
-		if (level.getEntitiesOfClass(Phantom.class, player.getBoundingBox().inflate(64),
+		if (level.getEntitiesOfClass(PurgeGunship.class, player.getBoundingBox().inflate(64),
 				entity -> hasName(entity, "Purged Gunship")).size() >= 2) {
 			return;
 		}
-		Phantom phantom = EntityTypes.PHANTOM.create(level, EntitySpawnReason.EVENT);
+		PurgeGunship phantom = ModEntities.PURGE_GUNSHIP.create(level, EntitySpawnReason.EVENT);
 		if (phantom == null) {
 			return;
 		}
@@ -677,12 +714,13 @@ public final class PurgeUnits {
 			if (distanceSquared > 2.8 * 2.8) {
 				chicken.getNavigation().moveTo(player, 2.4);
 			} else if (chicken.tickCount % 40 == 0) {
-				player.hurtServer(level, level.damageSources().mobAttack(chicken),
-						(5 + threat) * BattleChickens.CONFIG.enemyDamageMultiplier());
-				Vec3 tackle = player.position().subtract(chicken.position()).normalize();
-				BossController.applyDaySevenKnockback(player, tackle.scale(0.35).add(0, 0.18, 0));
-				level.sendParticles(ParticleTypes.CRIT, player.getX(), player.getY() + 0.6,
-						player.getZ(), 6, 0.25, 0.25, 0.25, 0.06);
+				if (player.hurtServer(level, level.damageSources().mobAttack(chicken),
+						(5 + threat) * BattleChickens.CONFIG.enemyDamageMultiplier())) {
+					Vec3 tackle = player.position().subtract(chicken.position()).normalize();
+					BossController.applyDaySevenKnockback(player, tackle.scale(0.35).add(0, 0.18, 0));
+					level.sendParticles(ParticleTypes.CRIT, player.getX(), player.getY() + 0.6,
+							player.getZ(), 6, 0.25, 0.25, 0.25, 0.06);
+				}
 			}
 			return;
 		}
@@ -694,28 +732,28 @@ public final class PurgeUnits {
 				Vec3 to = player.getBoundingBox().getCenter();
 				var shot = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER,
 						ClipContext.Fluid.NONE, chicken));
-				Vec3 tracer = shot.getType() == HitResult.Type.MISS
-						? from.add(to.subtract(from).scale(0.5))
-						: shot.getLocation();
+				Vec3 traceEnd = shot.getType() == HitResult.Type.MISS ? to : shot.getLocation();
+				BulletTracer.fire(level, from, traceEnd);
 				if (shot.getType() == HitResult.Type.MISS) {
-					player.hurtServer(level, level.damageSources().mobAttack(chicken),
-							(3 + threat) * BattleChickens.CONFIG.enemyDamageMultiplier());
-				} else if (level.getGameRules().get(
-						net.minecraft.world.level.gamerules.GameRules.MOB_GRIEFING)) {
+					if (player.hurtServer(level, level.damageSources().mobAttack(chicken),
+							(3 + threat) * BattleChickens.CONFIG.enemyDamageMultiplier())) {
+						level.sendParticles(ParticleTypes.CRIT, player.getX(), player.getY() + 0.6,
+								player.getZ(), 4, 0.12, 0.12, 0.12, 0.02);
+					}
+				} else {
 					BlockPos obstruction = shot.getBlockPos();
 					var state = level.getBlockState(obstruction);
-					if (!state.isAir() && !state.is(Blocks.BEDROCK)
-							&& (state.getBlock() instanceof com.cluck.block.BunkerBlock
-									|| state.getDestroySpeed(level, obstruction) >= 0)
+					if (state.getBlock() instanceof com.cluck.block.BunkerBlock) {
+						com.cluck.block.BunkerBlock.handleDestructionAttempt(
+								null, level, obstruction, chicken);
+					} else if (level.getGameRules().get(
+							net.minecraft.world.level.gamerules.GameRules.MOB_GRIEFING)
+							&& !state.isAir() && !state.is(Blocks.BEDROCK)
+							&& state.getDestroySpeed(level, obstruction) >= 0
 							&& level.getBlockEntity(obstruction) == null) {
-						if (!com.cluck.block.BunkerBlock.handleDestructionAttempt(
-								null, level, obstruction, chicken)) {
-							level.destroyBlock(obstruction, false, chicken);
-						}
+						level.destroyBlock(obstruction, false, chicken);
 					}
 				}
-				level.sendParticles(ParticleTypes.CRIT, tracer.x, tracer.y, tracer.z,
-						4, 0.12, 0.12, 0.12, 0.02);
 			}
 			return;
 		}
@@ -762,16 +800,18 @@ public final class PurgeUnits {
 				int reload = overlordSniper ? 100 : hasName(chicken, "Bomber General")
 						? 100 : threat >= 4 ? 120 : 160;
 				int telegraphTicks = overlordSniper ? 35 : threat >= 4 ? 20 : 30;
-				if (chicken.tickCount % reload == reload - telegraphTicks) {
-					BossController.showCombatAlert(player, net.minecraft.network.chat.Component.literal(overlordSniper
+				int ticksUntilShot = reload - chicken.tickCount % reload;
+				boolean telegraphing = ticksUntilShot > 0 && ticksUntilShot <= telegraphTicks;
+				if (rpg && telegraphing) {
+					BulletTracer.telegraph(level, chicken.getEyePosition(),
+							player.getBoundingBox().getCenter());
+				}
+				if (ticksUntilShot == telegraphTicks) {
+					String warning = overlordSniper
 							? "The Overlord's sniper has you in its sights! Break line of sight!"
-							: "A chicken sights you! Take cover!"));
-					for (int step = 0; step < 8; step++) {
-						double angle = Math.PI * 2 * step / 8;
-						level.sendParticles(ParticleTypes.FLAME,
-								player.getX() + Math.cos(angle) * 0.65, player.getY() + 0.1,
-								player.getZ() + Math.sin(angle) * 0.65, 1, 0, 0, 0, 0);
-					}
+							: rpg ? "An RPG chicken is lining up a rocket! Move!"
+							: "A chicken sights you! Take cover!";
+					BossController.showCombatAlert(player, net.minecraft.network.chat.Component.literal(warning));
 					level.playSound(null, player, SoundEvents.NOTE_BLOCK_PLING,
 							SoundSource.HOSTILE, 0.8F, 1.8F);
 				}
@@ -783,6 +823,8 @@ public final class PurgeUnits {
 							markRpgRoundUsed(chicken);
 						}
 					} else {
+						BulletTracer.fire(level, chicken.getEyePosition(),
+								player.getBoundingBox().getCenter());
 						player.hurtServer(level, level.damageSources().mobAttack(chicken),
 								(overlordSniper ? 18 + threat * 3 : 7 + threat)
 										* BattleChickens.CONFIG.enemyDamageMultiplier());
@@ -792,19 +834,18 @@ public final class PurgeUnits {
 				return;
 			}
 		}
-		if (hasName(chicken, "Grenadier Hen") && distanceSquared <= 20 * 20) {
+		if (hasName(chicken, "Grenadier Hen") && distanceSquared <= 20 * 20
+				&& hasClearAttackPath(level, chicken, player)) {
 			chicken.getNavigation().stop();
-			if (chicken.tickCount % 100 == 70) {
+			if (chicken.tickCount % 100 == 70 && !GRENADE_TARGETS.containsKey(chicken.getUUID())) {
 				Vec3 impact = player.position();
-				GRENADE_TARGETS.put(chicken.getUUID(), impact);
-				BossController.showCombatAlert(player, net.minecraft.network.chat.Component.literal(
-						"Grenadier bomb incoming — leave the marked spot!"));
-				emitBlastRing(level, player.position(), 2.5);
-				throwVisibleGrenade(level, chicken, impact, 30);
-			}
-			if (chicken.tickCount % 100 == 0) {
-				Vec3 impact = GRENADE_TARGETS.remove(chicken.getUUID());
-				detonateGrenade(level, chicken, impact == null ? player.position() : impact, threat);
+				ItemEntity projectile = throwVisibleGrenade(level, chicken, impact, 30);
+				if (projectile != null) {
+					GRENADE_TARGETS.put(chicken.getUUID(),
+							new GrenadeFlight(projectile, level.getGameTime() + 30, chicken, threat));
+					BossController.showCombatAlert(player, net.minecraft.network.chat.Component.literal(
+							"Grenadier bomb incoming — leave the marked spot!"));
+				}
 			}
 		} else if (distanceSquared > 2.8 * 2.8) {
 			chicken.getNavigation().moveTo(player, 2.0);
@@ -845,7 +886,7 @@ public final class PurgeUnits {
 				}
 			}
 			if (level.getGameRules().get(net.minecraft.world.level.gamerules.GameRules.MOB_GRIEFING)) {
-				int blockRadius = Math.min(2, BattleChickens.CONFIG.rocketBlockRadius());
+				int blockRadius = 2;
 				BlockPos center = BlockPos.containing(impact);
 				for (int x = -blockRadius; x <= blockRadius; x++) {
 					for (int y = -blockRadius; y <= blockRadius; y++) {
@@ -853,42 +894,26 @@ public final class PurgeUnits {
 							if (x * x + y * y + z * z <= blockRadius * blockRadius) {
 								BlockPos block = center.offset(x, y, z);
 								com.cluck.block.BunkerBlock.handleBlastDestructionAttempt(
-										null, level, impact, block, grenade, true, true);
+										null, level, impact, block, null, true, true);
 							}
 						}
 					}
 				}
 			}
-			level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y, impact.z, 1, 0, 0, 0, 0);
-			level.sendParticles(ParticleTypes.SMOKE, impact.x, impact.y, impact.z, 14, 0.45, 0.35, 0.45, 0.04);
-	}
-
-	private static void emitBlastRing(ServerLevel level, Vec3 center, double radius) {
-			for (int step = 0; step < 16; step++) {
-				double angle = Math.PI * 2 * step / 16;
-				level.sendParticles(ParticleTypes.FLAME,
-						center.x + Math.cos(angle) * radius, center.y + 0.1,
-						center.z + Math.sin(angle) * radius, 1, 0, 0, 0, 0);
-			}
+			level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y, impact.z, 1, 0, 0, 0, 0);
+			level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y, impact.z,
+					18, 0.7, 0.5, 0.7, 0.12);
+			level.sendParticles(ParticleTypes.SMOKE, impact.x, impact.y, impact.z,
+					20, 0.55, 0.4, 0.55, 0.06);
+			level.playSound(null, BlockPos.containing(impact), SoundEvents.GENERIC_EXPLODE.value(),
+					net.minecraft.sounds.SoundSource.HOSTILE, 2.5F, 0.9F);
 	}
 
 	public static float explosiveDefenseMultiplier(ServerPlayer player) {
 			if (player.getOffhandItem().is(ModItems.CLUCK_SHIELD)) {
 				return 0.5F;
 			}
-			if (hasInventoryItem(player, ModItems.REACTIVE_PLATING)) {
-				return 0.6F;
-			}
 			return 1.0F;
-	}
-
-	public static boolean hasInventoryItem(ServerPlayer player, Item item) {
-			for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
-				if (player.getInventory().getItem(slot).is(item)) {
-					return true;
-				}
-			}
-			return false;
 	}
 
 	public static boolean spawnOverlord(List<ServerPlayer> players, PurgeWorldData data) {
@@ -902,7 +927,7 @@ public final class PurgeUnits {
 			int x = player.blockPosition().getX() + (int) Math.round(Math.cos(angle) * distance);
 			int z = player.blockPosition().getZ() + (int) Math.round(Math.sin(angle) * distance);
 			int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-			Ravager overlord = EntityTypes.RAVAGER.create(level, EntitySpawnReason.EVENT);
+			OverlordBeast overlord = ModEntities.OVERLORD_BEAST.create(level, EntitySpawnReason.EVENT);
 			Chicken rider = ModEntities.createChicken(level, EntitySpawnReason.EVENT, "overlord");
 			if (overlord == null || rider == null) {
 				return false;
@@ -913,7 +938,7 @@ public final class PurgeUnits {
 			overlord.setCustomNameVisible(true);
 			if (overlord.getAttribute(Attributes.MAX_HEALTH) != null) {
 				overlord.getAttribute(Attributes.MAX_HEALTH).setBaseValue(
-						(1400 + data.threat() * 350) * BattleChickens.CONFIG.enemyHealthMultiplier());
+						2048 * BattleChickens.CONFIG.enemyHealthMultiplier());
 				overlord.setHealth((float) overlord.getAttributeValue(Attributes.MAX_HEALTH));
 			}
 			if (overlord.getAttribute(Attributes.SCALE) != null) {
@@ -952,7 +977,7 @@ public final class PurgeUnits {
 		return false;
 	}
 
-	private static void spawnOverlordEscorts(ServerLevel level, Ravager boss, ServerPlayer target, PurgeWorldData data) {
+	private static void spawnOverlordEscorts(ServerLevel level, OverlordBeast boss, ServerPlayer target, PurgeWorldData data) {
 		int escortCount = data.threat() >= 4 ? 3 : 2;
 		for (int index = 0; index < escortCount; index++) {
 			double angle = Math.PI * 2 * index / escortCount;
@@ -1018,9 +1043,9 @@ public final class PurgeUnits {
 		spawnWarlordGunner(level, boss, target, "Overlord Gunner", false);
 	}
 
-	private static void spawnAerialOverlord(ServerLevel level, Ravager groundBoss,
+	private static void spawnAerialOverlord(ServerLevel level, OverlordBeast groundBoss,
 											ServerPlayer target, PurgeWorldData data) {
-		Phantom phantom = EntityTypes.PHANTOM.create(level, EntitySpawnReason.EVENT);
+		SkyOverlord phantom = ModEntities.SKY_OVERLORD.create(level, EntitySpawnReason.EVENT);
 		Chicken rider = ModEntities.createChicken(level, EntitySpawnReason.EVENT, "bombardier");
 		if (phantom == null || rider == null) {
 			return;
@@ -1031,7 +1056,7 @@ public final class PurgeUnits {
 		phantom.setCustomNameVisible(true);
 		phantom.setPhantomSize(8);
 		if (phantom.getAttribute(Attributes.MAX_HEALTH) != null) {
-			double health = 4096 * BattleChickens.CONFIG.enemyHealthMultiplier();
+			double health = 2048 * BattleChickens.CONFIG.enemyHealthMultiplier();
 			phantom.getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
 			phantom.setHealth((float) health);
 		}
@@ -1068,7 +1093,7 @@ public final class PurgeUnits {
 		spawnWarlordGunner(level, phantom, target, "Sky Gunner", true);
 	}
 
-	private static void spawnMountedOverlordSniper(ServerLevel level, Ravager boss, ServerPlayer target) {
+	private static void spawnMountedOverlordSniper(ServerLevel level, OverlordBeast boss, ServerPlayer target) {
 		Chicken sniper = ModEntities.createChicken(level, EntitySpawnReason.EVENT, "sniper");
 		if (sniper == null) {
 			return;
@@ -1091,7 +1116,7 @@ public final class PurgeUnits {
 		}
 	}
 
-	private static void spawnOverlordMedics(ServerLevel level, Ravager boss, ServerPlayer target, int threat) {
+	private static void spawnOverlordMedics(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		for (int index = 0; index < 2; index++) {
 			Chicken medic = ModEntities.createChicken(level, EntitySpawnReason.EVENT, "medic");
 			if (medic == null) {
@@ -1153,25 +1178,43 @@ public final class PurgeUnits {
 		}
 	}
 
-	public static void throwBossGrenade(ServerLevel level, Phantom bomber, Vec3 impact) {
-		throwVisibleGrenade(level, bomber, impact, 40);
+	public static ItemEntity throwBossGrenade(ServerLevel level, SkyOverlord bomber, Vec3 impact) {
+		ItemEntity grenade = throwVisibleGrenade(level, bomber, impact, 40);
 		level.playSound(null, bomber, net.minecraft.sounds.SoundEvents.CREEPER_PRIMED,
 				net.minecraft.sounds.SoundSource.HOSTILE, 1.4F, 0.65F);
+		return grenade;
 	}
 
-	private static void throwVisibleGrenade(ServerLevel level, LivingEntity bomber, Vec3 impact, int flightTicks) {
+	private static ItemEntity throwVisibleGrenade(ServerLevel level, LivingEntity bomber, Vec3 impact,
+			int flightTicks) {
 		ItemEntity bomb = new ItemEntity(level, bomber.getX(), bomber.getY() - 0.5,
 				bomber.getZ(), new ItemStack(ModItems.PURGE_GRENADE));
 		bomb.setThrower(bomber);
 		bomb.setNeverPickUp();
-		bomb.setUnlimitedLifetime();
 		bomb.setCustomName(net.minecraft.network.chat.Component.literal("Purge Grenade Projectile"));
 		Vec3 difference = impact.subtract(bomb.position());
 		double gravity = 0.04;
 		bomb.setDeltaMovement(difference.x / flightTicks,
 				(difference.y + 0.5 * gravity * flightTicks * flightTicks) / flightTicks,
 				difference.z / flightTicks);
-		level.addFreshEntity(bomb);
+		if (!level.addFreshEntity(bomb)) {
+			return null;
+		}
+		return bomb;
+	}
+
+	public static void tickGrenadeFlights(ServerLevel level) {
+		var flights = GRENADE_TARGETS.entrySet().iterator();
+		while (flights.hasNext()) {
+			GrenadeFlight flight = flights.next().getValue();
+			if (flight.bomber().level() != level || level.getGameTime() < flight.detonationTick()) {
+				continue;
+			}
+			flights.remove();
+			Vec3 impact = flight.projectile().position();
+			detonateGrenade(level, flight.bomber(), impact, flight.threat());
+			flight.projectile().discard();
+		}
 	}
 
 	public static void detonateBossGrenade(ServerLevel level, LivingEntity bomber, Vec3 impact, int threat) {
@@ -1271,7 +1314,7 @@ public final class PurgeUnits {
 		}
 	}
 
-	public static void spawnRavagerMilitia(ServerLevel level, Ravager boss, ServerPlayer target, int threat) {
+	public static void spawnRavagerMilitia(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		int active = level.getEntitiesOfClass(Chicken.class, boss.getBoundingBox().inflate(64),
 				entity -> entity.entityTags().contains("battle_chickens_ravager_assault")).size();
 		int count = Math.min(2, 6 - active);
@@ -1490,7 +1533,7 @@ public final class PurgeUnits {
 			if (player.level() != level) {
 				continue;
 			}
-			Ravager boss = level.getEntitiesOfClass(Ravager.class, player.getBoundingBox().inflate(128),
+			OverlordBeast boss = level.getEntitiesOfClass(OverlordBeast.class, player.getBoundingBox().inflate(128),
 					PurgeUnits::isBoss).stream().findFirst().orElse(null);
 			if (boss == null) {
 				continue;
@@ -1606,9 +1649,6 @@ public final class PurgeUnits {
 			drop(level, dead.position(), ModItems.SCRAP_CIRCUIT, 1 + level.getRandom().nextInt(2));
 		} else if (hasName(dead, "Armored Ravager Tank") || hasName(dead, "Golem Walker")) {
 			drop(level, dead.position(), ModItems.SCRAP_PLATE, 3);
-			if (level.getRandom().nextFloat() < 0.15F) {
-				drop(level, dead.position(), ModItems.REACTIVE_PLATING, 1);
-			}
 			if (hasName(dead, "Golem Walker") && level.getRandom().nextFloat() < 0.3F) {
 				drop(level, dead.position(), ModItems.GENERATOR_CORE, 1);
 			}

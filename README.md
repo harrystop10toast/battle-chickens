@@ -13,7 +13,7 @@
 3. [Day 7 Doomsday Boss Fight](#day-7-doomsday-boss-fight)
    - [The Overlord (Ground Boss)](#the-overlord-ground-boss)
    - [The Sky Overlord (Aerial Boss)](#the-sky-overlord-aerial-boss)
-   - [Shield Generator Golems & Resistance Scaling](#shield-generator-golems--resistance-scaling)
+   - [Shield Generator Golem & Resistance Scaling](#shield-generator-golem--resistance-scaling)
    - [Teleportation Pursuit Mechanic](#teleportation-pursuit-mechanic)
    - [Friendly Fire Dynamics](#friendly-fire-dynamics)
 4. [Complete Item Compendium](#complete-item-compendium)
@@ -77,7 +77,7 @@ Coop effects depend on who placed them. Purge-placed Coops strengthen nearby Pur
 
 #### 4. Days 5–6: pursue elite salvage
 
-Tanks and Golem Walkers drop 3 Scrap Plates; either can rarely drop Reactive Plating, and a Golem Walker has a 30% chance to drop a **Generator Core**. Generals drop their **General's Plume** and 2 Scrap Plates. Gunships and Drones drop Scrap Circuits. These elite drops and their blueprint unlocks make the late-game recipes possible. Open surviving Rations Crates for a random supply kit; on non-Hardcore Threat I–III runs, surviving a day earns a crate at dawn.
+Tanks and Golem Walkers drop 3 Scrap Plates, and a Golem Walker has a 30% chance to drop a **Generator Core**. Generals drop their **General's Plume** and 2 Scrap Plates. Gunships drop Scrap Circuits; the Sky Overlord's targeting drones can also be shot down for salvage during the Day 7 fight. These elite drops and their blueprint unlocks make the late-game recipes possible. Open surviving Rations Crates for a random supply kit; on non-Hardcore Threat I–III runs, surviving a day earns a crate at dawn.
 
 #### 5. Day 7: defeat both Overlords
 
@@ -113,7 +113,7 @@ Ingredients below are exact recipe contents; shaped layouts are not needed. “B
 | Generator Core | 30% chance from a Golem Walker; no recipe. | Two are needed for the Flockguard Sigil. |
 | Overlord Shard | Boss drop and victory reward; no recipe. | Ingredient for a Singularity Ominous Egg. |
 | Golden Egg | 30% boss-drop chance; no recipe. | Use to hatch and ride a Giga Chicken. |
-| Overlord Core | Purge victory reward; no recipe. | Use normally for an orbital strike; sneak-use on a block to place a Defense Core. |
+| Overlord Core | Purge victory reward; no recipe. | Hold right-click to charge and fire a vertical sonic boom; sneak-use on a block to place a Defense Core. |
 | Overlord's Crown | Victory reward for players who contributed; no recipe. | Wear for a nearby-ally Strength aura, or display it. |
 | Flockwar Horn | Sky Overlord drop and Purge victory reward; no recipe. | Rally nearby players with Strength, Resistance, Speed, and brief Regeneration. |
 | Nemesis Trophy | Dropped when you kill a Nemesis Chicken that has killed you; no recipe. | Named trophy for display. |
@@ -131,12 +131,10 @@ Ingredients below are exact recipe contents; shaped layouts are not needed. “B
 | Captured Peckzooka | 3 Scrap Plates, Scrap Circuit, 2 Rocket Casings, 2 Iron Ingots (RPG blueprint); rare RPG Chicken drop. | Fires Dud Rockets; each shot consumes one rocket. |
 | Sniper Beak | Scrap Circuit, Spyglass, 4 Iron Ingots (Sniper blueprint). | Long-range aimed shot using an Arrow; effective to 64 blocks. |
 | Egg Cannon | 2 Scrap Plates, 2 Eggs, 2 Rocket Casings, Scrap Circuit (Grenadier blueprint). | Consumes an Egg to blast and knock back nearby targets. |
-| Flak Cannon | 3 Scrap Plates, Scrap Circuit, 2 Rocket Casings, Iron Ingot (Drone or Gunship blueprint). | Uses a Scrap Circuit charge to attack the nearest visible airborne Purge target. |
+| Flak Cannon | 3 Scrap Plates, Scrap Circuit, 2 Rocket Casings, Iron Ingot (Drone or Gunship blueprint). | Uses a Scrap Circuit charge to fire a seven-pellet, short-range spread; deals bonus damage to Phantoms and can intercept the Overlord's targeting drones. |
 | Flame Fryer | 2 Scrap Plates, Rocket Casing, 2 Iron Ingots (Grenadier blueprint). | Consumes a Gunpowder Pouch to burn targets in front of you. |
 | Rooster Spear | War Feather, Iron Ingot, Scrap Plate (Sergeant blueprint). | Melee weapon with extended reach and extra damage to airborne foes. |
 | Cluck Shield | 5 Scrap Plates, Scrap Circuit, Gold Ingot (Riot blueprint). | Use for temporary Absorption and Resistance; holding it in the offhand can deflect incoming rockets. |
-| Riot Helmet | 5 Scrap Plates (Riot blueprint). | Use to gain Resistance; while that effect is active, it can block arrows from the direction you face. |
-| Reactive Plating | 7 Scrap Plates, Scrap Circuit, Shield (Tank or Walker blueprint). | Use to gain temporary Resistance. |
 | Feather Cloak | 4 War Feathers, Phantom Membrane, Scrap Circuit, Scrap Plate (Sergeant blueprint). | Use to gain Slow Falling and a small upward boost. |
 | Flockguard Sigil | 4 War Feathers, Golden Feather, 2 Generator Cores, Shield, Scrap Plate (Walker blueprint). | Hold in either hand for knockback immunity and 40% less damage from chickens. |
 | Medic Syringe | Craft 2 from Golden Feather, 3 Iron Nuggets, Glass Bottle (Medic blueprint); Medic Hen drop. | Consume one to heal yourself or a nearby player and grant Regeneration. |
@@ -150,7 +148,8 @@ Ingredients below are exact recipe contents; shaped layouts are not needed. “B
 
 | Item | Recipe / blueprint unlock | What it is for |
 | :--- | :--- | :--- |
-| Bunker Block | Craft 4 from 4 Obsidian, 4 Scrap Plates, Iron Block (Tank or Walker blueprint). | Heavy fortification that takes 20 custom siege hits to break. |
+| Bunker Block | Craft 4 from 4 Obsidian, 4 Scrap Plates, Iron Block (Tank or Walker blueprint). | Cracks at 256 and breaks after 1,024 accumulated siege damage. |
+| Bunker Glass | Craft 4 from 4 Obsidian, 4 Tinted Glass, Iron Block. | Tinted-glass fortification with half the bunker block's mining, blast, and siege durability; cracks at 128 and breaks at 512 siege damage. |
 
 The Veteran Rooster appears after a Threat III-or-higher victory once a player reaches Rank III. Trades include 8 War Feathers for 2 Dud Rockets, 4 Golden Feathers for 3 Scrap Circuits, 16 War Feathers for a General's Plume, or 12 War Feathers plus 8 Scrap Plates for a Lasso.
 
@@ -175,35 +174,35 @@ A 2.5x scale colossal Phantom piloted by the **Overlord Bombardier** and escorte
 - **Spinning TNT Run**: Spins rapidly while dropping waves of primed TNT.
 - **Mega TNT**: Launches a glowing, high-yield explosive payload with a 22-block danger zone.
 - **Dive Bomb**: Swoops down at extreme velocity to bite players.
-- **Damage Cap Armor**: Resists burst damage—no single hit can deal more than 33% of its maximum health. The Sky Overlord has 1,024 base health and takes only 33% damage from the ground Overlord's Ravager attacks.
+- **Damage Cap Armor**: No single hit can deal more than 5% of the Sky Overlord's maximum health. It has 2,048 base health before difficulty scaling.
 
-### Shield Generator Golems & Resistance Scaling
-The Overlord Ravager is protected by **4 Shield Generator Golems** tethered around it. Unlike previous versions where the boss was completely invulnerable, the Ravager now receives scaled **Resistance** based directly on the number of living shield golems:
+### Shield Generator Golem & Resistance Scaling
+The ground Overlord is protected by one high-health Shield Generator Golem that orbits in formation and teleports with the boss; it is not attached by a lead. The generator's remaining health controls the Overlord's **Resistance**:
 
-- **4 Golems Alive**: **Resistance IV** (80% damage reduction)
-- **3 Golems Alive**: **Resistance III** (60% damage reduction)
-- **2 Golems Alive**: **Resistance II** (40% damage reduction)
-- **1 Golem Alive**: **Resistance I** (20% damage reduction)
-- **0 Golems Alive**: **No Damage Reduction** (Shields Offline!)
+- **Above 75% health**: **Resistance IV**
+- **Above 50% to 75% health**: **Resistance III**
+- **Above 25% to 50% health**: **Resistance II**
+- **Alive at 25% health or below**: **Resistance I**
+- **Generator destroyed**: Resistance is removed.
 
-*The top-screen boss bar dynamically displays the current shield count and Resistance level in real-time.*
+*The boss bar displays the generator's remaining health and the current Resistance level.*
 
 ### Teleportation Pursuit Mechanic
-Fleeing from the apocalypse is no longer an escape. If players attempt to run away on Day 7 (exceeding 150 blocks from the bosses), **both the Overlord and Sky Overlord teleport within a 200-block radius** (50–70 blocks away) to intercept and confront the players.
-- The Ravager's passengers and tethered Shield Generator Golems teleport alongside it in formation.
+Fleeing from the apocalypse is no longer an escape. If players get more than 150 blocks from a boss on Day 7, **the boss teleports to intercept them**, reappearing 50–70 blocks from the nearest player.
+- The Ravager's passengers and Shield Generator Golem teleport alongside it in formation.
 - The Sky Overlord repositions at altitude directly ahead of the player's vector.
 
 ### Friendly Fire Dynamics
 To level the playing field against overwhelming hordes, **friendly fire exists between bosses and chickens**:
 - **Boss AOE Obliteration**: The Ravager's charges, leaps, rockets, sonic blasts, orbital strikes, and the Phantom's TNT volleys will damage and blow away any friendly chicken infantry caught in the crossfire!
 - **Chicken Crossfire**: Stray rockets and grenades launched by RPG Chickens and Grenadier Hens can clip and damage the bosses.
-- **Shield Generator Protection**: The **Shield Generator Iron Golems are considered part of the Ravager's core chassis**. Consequently, shield golems are **immune to friendly fire from both bosses and chickens**, ensuring players must deliberately dismantle the shield array themselves.
+- **Shield Generator Protection**: The Shield Generator Golem ignores damage from the ground Overlord and Purge chickens, but the Sky Overlord can damage it.
 
 ---
 
 ## Complete Item Compendium
 
-Every item in the mod features custom colored multi-line tooltips (categorized by tag, description, usage, and stats) and enhanced 3D models with bespoke display perspectives.
+Many items feature custom colored multi-line tooltips (categorized by tag, description, usage, and stats); selected weapons, utilities, and trophies also use custom models.
 
 ### Ominous Eggs
 - **Ominous Egg (`battle-chickens:ominous_egg`)**: Starts the standard 7-day Chicken Purge (Threat I). Right-click on the ground to begin.
@@ -221,15 +220,13 @@ Every item in the mod features custom colored multi-line tooltips (categorized b
 - **Sniper Beak (`battle-chickens:sniper_beak`)**: Long-range aimed shot with a 64-block effective range. Uses vanilla arrows.
 - **Flame Fryer (`battle-chickens:flame_fryer`)**: Consumes a **Gunpowder Pouch** to burn targets in a short cone.
 - **Egg Cannon (`battle-chickens:egg_cannon`)**: Consumes an Egg to blast and knock back nearby targets.
-- **Flak Cannon (`battle-chickens:flak_cannon`)**: Uses a Scrap Circuit charge to attack the nearest visible airborne Purge target.
+- **Flak Cannon (`battle-chickens:flak_cannon`)**: Uses a Scrap Circuit charge to fire a seven-pellet, short-range spread; deals bonus damage to Phantoms and can intercept the Overlord's targeting drones.
 
 ### Defensive Armor & Shields
 - **Flockguard Sigil (`battle-chickens:flockguard_sigil`)**: Crafted from 2 Generator Cores, War Feathers, a Golden Feather, a shield, and a Scrap Plate. Holding it grants knockback immunity and reduces damage from chickens by 40%.
 - **Cluck Shield (`battle-chickens:cluck_shield`)**: Use for temporary Absorption and Resistance; holding it in the offhand can deflect incoming rockets.
 - **Overlord's Crown (`battle-chickens:overlord_crown`)**: Awarded to players who contribute to a Purge victory. Wearing it grants nearby allies a Strength aura within 8 blocks; it can also be displayed.
 - **General's Plume (`battle-chickens:generals_plume`)**: Dropped by Purge Generals; wearable/displayable trophy. Its nearby Strength effect is not currently applied by the implementation.
-- **Riot Helmet (`battle-chickens:riot_helmet`)**: Use to gain Resistance; while that effect is active, it can block arrows from the direction you face.
-- **Reactive Plating (`battle-chickens:reactive_plating`)**: Use to gain temporary Resistance.
 - **Feather Cloak (`battle-chickens:feather_cloak`)**: Use to gain Slow Falling and a small upward boost.
 
 ### Tactical Utilities & Consumables
@@ -250,11 +247,12 @@ Every item in the mod features custom colored multi-line tooltips (categorized b
 - **Golden Feather (`battle-chickens:golden_feather`)**: Dropped by Sergeants, found in outpost chests, or granted as a Rank IV+ start reward; used in Veteran Rooster trades.
 - **Generator Core (`battle-chickens:generator_core`)**: Full 3D modeled power core dropped with a 30% chance by Day 5+ Golem Walkers. Used to forge the Flockguard Sigil.
 - **Overlord Shard (`battle-chickens:overlord_shard`)**: Crystallized void energy dropped upon defeating the Overlord. Used for Singularity Eggs and top-tier upgrades.
-- **Overlord Core (`battle-chickens:overlord_core`)**: Full 3D modeled ultimate artifact. Right-click to call down an orbital strike, or Sneak-Right-Click a block to deploy a permanent Defense Core.
+- **Overlord Core (`battle-chickens:overlord_core`)**: Hold right-click to charge a vertical sonic boom, then release to fire; a fully charged ultimate fires five booms on a longer cooldown. Sneak-right-click a block to deploy a permanent Defense Core.
 
 ### Defensive Structures & Blocks
 - **Scrap Bench (`battle-chickens:scrap_bench`)**: Crafting-table block. Right-click to open its crafting interface whether hands are empty or holding items.
-- **Bunker Block (`battle-chickens:bunker_block`)**: Exceptionally hard fortification masonry. Custom siege attacks—including rockets, TNT blasts, and Ravager/Phantom block-breaking attacks—crack it on the first hit and break it after 20 siege hits. Player and Ravager Lasso impacts cannot damage or extract bunker blocks.
+- **Bunker Block (`battle-chickens:bunker_block`)**: Exceptionally hard fortification masonry. Custom siege damage cracks it at 256 and breaks it at 1,024 accumulated damage. Player and Ravager Lasso impacts cannot damage or extract bunker blocks.
+- **Bunker Glass (`battle-chickens:bunker_glass`)**: Tinted-glass-like fortification crafted from Obsidian, Tinted Glass, and an Iron Block. It has half the mining, blast, and siege durability of a Bunker Block (128 to crack; 512 to break).
 - **Defense Core (`battle-chickens:defense_core`)**: Permanent beacon created from an Overlord Core. Grants nearby players **Resistance** and zaps approaching Purge chickens.
 - **Scarecrow Turret (`battle-chickens:scarecrow_turret`)**: Places a pumpkin-headed, crossbow-wielding armor stand that visibly zaps hostile Purge chickens within 16 blocks. Holds 64 seed rounds; right-click the stand with wheat seeds to reload (16 rounds/seed), or empty-hand it to inspect ammo.
 - **Radar Coop (`battle-chickens:radar_coop`)**: Purge-placed, grants nearby Purge chickens Strength; player-placed, grants nearby players Speed and makes Purge chickens Glow. Purge placement does not reveal players. Effect radius: 24 blocks.
@@ -278,13 +276,13 @@ Every item in the mod features custom colored multi-line tooltips (categorized b
 | **Sniper Hen** | Sniper Beak rifle; telegraphs shots from up to 96 blocks. | Day 3+ |
 | **RPG Chicken** | Fires 3 Dud Rockets at 8s intervals with audible telegraph. | Day 3+ (Unlimited on Day 7) |
 | **Medic Hen** | Heals nearby chickens, shield golems, and bosses. | Day 3+ |
-| **Riot Chicken** | Ballistic shield and Riot Helmet; highly durable. | Day 4+ |
+| **Riot Chicken** | Ballistic shield and heavy armor; highly durable. | Day 4+ |
 | **Gunship Gunner** | Mounted on Phantom Gunships; fires automatic Beak-47 bursts. | Day 4+ |
 | **Armored Ravager Tank** | Miniaturized Ravager tank vehicle with heavy melee. | Day 5+ |
 | **Golem Walker** | Iron Golem walker; 30% chance to drop Generator Core. | Day 5+ |
-| **Purge Drone** | High-speed Vex drone harassing players from air. | Day 6+ |
+| **Purge Drone** | High-speed Vex drone launched by the ground Overlord; can be shot down for salvage. | Day 7 Boss Fight |
 | **Purge Generals** | Summoner, Tank, Bomber, and Buffer command variants. | Day 5+ & Boss Fight |
-| **Shield Generator Golem** | Leashed to the Overlord; powers resistance shield and fires lasers. | Day 7 Boss Fight |
+| **Shield Generator Golem** | Orbits the Overlord without a lead; powers its resistance shield, fires pulses, and attacks nearby players. | Day 7 Boss Fight |
 
 ---
 
@@ -348,3 +346,16 @@ To launch a development client directly:
 ```bash
 ./gradlew runClient
 ```
+
+### Editing Entity Textures
+Entity textures live in `src/main/resources/assets/battle-chickens/textures/entity/` and are packaged with the mod. Each special mob uses its own complete PNG directly; it does not load a vanilla skin underneath or read textures from an external `entity` folder. Replace or edit a PNG at the same path, then launch again with `./gradlew runClient`. Keep the existing dimensions and PNG format so Minecraft's model UV mapping continues to line up.
+
+- `chicken/*.png` are the role-specific chicken skins (64×32), mapped by `ChickenRoleRenderer`.
+- `armored_tank.png` and `overlord.png` are complete Ravager-model skins (128×128).
+- `purge_drone.png` is a complete Vex-model skin (32×32).
+- `purge_gunship.png` and `sky_overlord.png` are complete Phantom-model skins (64×64).
+- `shield_generator_golem.png` is a complete Iron Golem-model skin (128×128), shared by the Shield Generator and Golem Walker.
+- `enraged_golem.png` is the Sky Overlord's separate, red-toned Iron Golem-model skin (128×128).
+- `veteran_rooster.png` is a complete Villager-model skin (64×64).
+
+The custom entity renderers keep the vanilla models and animations, so the existing UV layouts apply to these independent, editable skins.

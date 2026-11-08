@@ -1,7 +1,11 @@
 package com.cluck.event;
 
 import com.cluck.BattleChickens;
+import com.cluck.entity.ModEntities;
+import com.cluck.entity.PurgeDrone;
+import com.cluck.entity.VeteranRooster;
 import com.cluck.item.ModItems;
+import com.cluck.item.BulletTracer;
 import com.cluck.item.LassoToss;
 import com.cluck.item.ScarecrowTurretItem;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -10,7 +14,6 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.EntityLoadData;
-import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerBossEvent;
@@ -21,18 +24,18 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.BossEvent;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.chicken.Chicken;
-import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -78,9 +81,16 @@ public final class PurgeManager {
 					&& projectile.getOwner() != null) {
 				attacker = projectile.getOwner();
 			}
-			if (entity instanceof ServerPlayer player && attacker instanceof LivingEntity livingAttacker
+			if (entity instanceof LivingEntity target && attacker instanceof LivingEntity livingAttacker
+					&& entity != attacker && entity.level() instanceof ServerLevel level
+					&& !(source.getDirectEntity() instanceof PurgeDrone)
+					&& !PurgeUnits.hasClearAttackPath(level, livingAttacker, target)) {
+				return false;
+			}
+			if (entity instanceof LivingEntity target && source.is(DamageTypeTags.IS_EXPLOSION)
 					&& entity.level() instanceof ServerLevel level
-					&& !PurgeUnits.hasClearAttackPath(level, livingAttacker, player)) {
+					&& source.getSourcePosition() != null
+					&& !PurgeUnits.hasBlastExposure(level, source.getSourcePosition(), target)) {
 				return false;
 			}
 			if (entity instanceof ServerPlayer player && source.is(DamageTypeTags.IS_EXPLOSION)
@@ -139,23 +149,35 @@ public final class PurgeManager {
 						return true;
 					}
 					if (attackerChicken && entityBoss) {
+						if (BossController.isAerialBoss(entity)
+								&& entity.level() instanceof ServerLevel level
+								&& capAerialBossDamage(entity, source, amount, level)) {
+							return false;
+						}
 						return true;
 					}
 					if (PurgeUnits.isBoss(attacker) && BossController.isAerialBoss(entity)) {
+						if (entity.level() instanceof ServerLevel level
+								&& capAerialBossDamage(entity, source, amount, level)) {
+							return false;
+						}
 						return true;
 					}
 					return false;
 				}
 			}
-			if (BossController.isAerialBoss(entity) && PurgeUnits.isBoss(attacker)
-					&& entity.level() instanceof ServerLevel level) {
-				DAMAGE_CAP_REENTRY.add(entity.getUUID());
-				try {
-					entity.hurtServer(level, source, amount * 0.33F);
-				} finally {
-					DAMAGE_CAP_REENTRY.remove(entity.getUUID());
+			if (BossController.isAerialBoss(entity) && entity.level() instanceof ServerLevel level) {
+				float adjustedDamage = PurgeUnits.isBoss(attacker) ? amount * 0.33F : amount;
+				float damageCap = entity.getMaxHealth() * 0.05F;
+				if (adjustedDamage < amount || adjustedDamage > damageCap) {
+					DAMAGE_CAP_REENTRY.add(entity.getUUID());
+					try {
+						entity.hurtServer(level, source, Math.min(adjustedDamage, damageCap));
+					} finally {
+						DAMAGE_CAP_REENTRY.remove(entity.getUUID());
+					}
+					return false;
 				}
-				return false;
 			}
 			if (BossController.isGenerator(entity)
 					&& amount > entity.getMaxHealth() / 5.0F
@@ -168,25 +190,7 @@ public final class PurgeManager {
 				}
 				return false;
 			}
-			if (BossController.isAerialBoss(entity)
-					&& amount > entity.getMaxHealth() / 3.0F
-					&& entity.level() instanceof ServerLevel level) {
-				DAMAGE_CAP_REENTRY.add(entity.getUUID());
-				try {
-					entity.hurtServer(level, source, entity.getMaxHealth() / 3.0F);
-				} finally {
-					DAMAGE_CAP_REENTRY.remove(entity.getUUID());
-				}
-				return false;
-			}
-			if (!(entity instanceof ServerPlayer player)
-					|| !(source.getDirectEntity() instanceof AbstractArrow arrow)
-					|| !player.hasEffect(net.minecraft.world.effect.MobEffects.RESISTANCE)
-					|| !PurgeUnits.hasInventoryItem(player, ModItems.RIOT_HELMET)) {
-				return true;
-			}
-			Vec3 toShooter = arrow.position().subtract(player.position()).normalize();
-			return player.getLookAngle().normalize().dot(toShooter) <= 0.5;
+			return true;
 		});
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			PurgeUnits.onWarriorDamaged(entity, source);
@@ -281,6 +285,21 @@ public final class PurgeManager {
 		return true;
 	}
 
+	private static boolean capAerialBossDamage(LivingEntity entity, DamageSource source, float amount,
+			ServerLevel level) {
+		float damageCap = entity.getMaxHealth() * 0.05F;
+		if (amount <= damageCap) {
+			return false;
+		}
+		DAMAGE_CAP_REENTRY.add(entity.getUUID());
+		try {
+			entity.hurtServer(level, source, damageCap);
+		} finally {
+			DAMAGE_CAP_REENTRY.remove(entity.getUUID());
+		}
+		return true;
+	}
+
 	private static void tick(MinecraftServer server) {
 		LassoToss.tick(server);
 		PurgeWorldData data = PurgeWorldData.get(server.overworld());
@@ -294,16 +313,18 @@ public final class PurgeManager {
 									net.minecraft.world.effect.MobEffects.STRENGTH, 60, 0, true, false));
 						}
 					}
-					if (leader.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(ModItems.GENERALS_PLUME)
-							&& leader.level().getEntitiesOfClass(Chicken.class, leader.getBoundingBox().inflate(16),
-							PurgeUnits::isUnit).size() > 0) {
-						leader.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-								net.minecraft.world.effect.MobEffects.STRENGTH, 60, 0, true, false));
-					}
+				}
+				if (leader.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(ModItems.GENERALS_PLUME)
+						&& !leader.level().getEntitiesOfClass(Chicken.class, leader.getBoundingBox().inflate(16),
+						PurgeUnits::isUnit).isEmpty()) {
+					leader.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+							net.minecraft.world.effect.MobEffects.STRENGTH, 60, 0, true, false));
 				}
 			}
 		}
 		for (ServerLevel level : server.getAllLevels()) {
+			BulletTracer.tick(level);
+			PurgeUnits.tickGrenadeFlights(level);
 			if (level.getGameTime() % 20 == 0) {
 				ScarecrowTurretItem.tick(level);
 			}
@@ -311,6 +332,7 @@ public final class PurgeManager {
 			PurgeUnits.tickGigaChickens(level, players);
 			PurgeUnits.tickGoldenEggLayers(level, players);
 			PurgeUnits.tickCoopConstruction(level, players, data);
+			PurgeUnits.tickBunkerSiege(level, players);
 		}
 		if (server.overworld().getGameTime() % 20 == 0) {
 			for (ServerPlayer player : players) {
@@ -493,14 +515,18 @@ public final class PurgeManager {
 			player.sendSystemMessage(Component.literal("Outpost cleared: nearby Purge squads scattered; +5 contribution."));
 		}
 		if (PurgeUnits.isNemesis(dead) && killer instanceof ServerPlayer player) {
+			String playerId = player.getUUID().toString();
+			data.recordNemesisKill(playerId);
 			ItemStack trophy = new ItemStack(ModItems.NEMESIS_TROPHY);
 			trophy.set(DataComponents.CUSTOM_NAME, Component.literal(
 					dead.getCustomName().getString() + " Trophy"));
+			trophy.set(DataComponents.LORE, new ItemLore(List.of(
+					Component.literal("Nemesis Rank: " + PurgeUnits.nemesisRank(dead)),
+					Component.literal("Nemeses Defeated: " + data.nemesisKills(playerId)))));
 			level.addFreshEntity(new ItemEntity(level, dead.getX(), dead.getY(), dead.getZ(), trophy));
-			data.recordNemesisKill(player.getUUID().toString());
 			award(player, "nemesis_down", "nemesis");
 			if (data.isActive()) {
-				data.addContribution(player.getUUID().toString(), 5);
+				data.addContribution(playerId, 5);
 			}
 		}
 		if (!data.isActive()) {
@@ -585,9 +611,9 @@ public final class PurgeManager {
 			case "sniper" -> new String[]{"sniper_beak"};
 			case "drone", "gunship" -> new String[]{"flak_cannon", "emp_disruptor"};
 			case "medic" -> new String[]{"medic_syringe"};
-			case "riot" -> new String[]{"riot_helmet", "cluck_shield"};
-			case "tank" -> new String[]{"reactive_plating", "bunker_block"};
-			case "walker" -> new String[]{"reactive_plating", "bunker_block", "flockguard_sigil"};
+			case "riot" -> new String[]{"cluck_shield"};
+			case "tank" -> new String[]{"bunker_block"};
+			case "walker" -> new String[]{"bunker_block", "flockguard_sigil"};
 			case "general" -> new String[]{"cluck_radar", "signal_scrambler"};
 			case "sergeant" -> new String[]{"rooster_spear", "feather_cloak"};
 			case "militia" -> new String[]{"beak_47"};
@@ -716,7 +742,7 @@ public final class PurgeManager {
 
 	private static boolean spawnVeteranTrader(ServerPlayer player) {
 		ServerLevel level = player.level();
-		Villager trader = EntityTypes.VILLAGER.create(level, EntitySpawnReason.EVENT);
+		VeteranRooster trader = ModEntities.VETERAN_ROOSTER.create(level, EntitySpawnReason.EVENT);
 		if (trader == null) {
 			return false;
 		}
