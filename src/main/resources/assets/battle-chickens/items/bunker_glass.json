@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "battle-chickens:block/bunker_glass"
+    "model": "battle-chickens:item/bunker_glass"
   }
 }

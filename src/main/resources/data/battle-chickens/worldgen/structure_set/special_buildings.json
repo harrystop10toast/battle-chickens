@@ -1,0 +1,18 @@
+{
+  "structures": [
+    {
+      "structure": "battle-chickens:abandoned_house",
+      "weight": 1
+    },
+    {
+      "structure": "battle-chickens:steves_fried_chicken",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 96,
+    "separation": 64,
+    "salt": 821467201
+  }
+}

@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "battle-chickens:block/defense_core"
+    "model": "battle-chickens:item/defense_core"
   }
 }

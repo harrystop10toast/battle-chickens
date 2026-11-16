@@ -26,6 +26,9 @@ public final class ModEntities {
 	public static final EntityType<ArmoredTank> ARMORED_TANK = registerArmoredTank();
 	public static final EntityType<OverlordBeast> OVERLORD_BEAST = registerOverlordBeast();
 	public static final EntityType<PurgeDrone> PURGE_DRONE = registerPurgeDrone();
+	public static final EntityType<GrenadeEntity> GRENADE = registerGrenade();
+	public static final EntityType<BarrelEntity> BARREL = registerBarrel();
+	public static final EntityType<PotionEntity> POTION = registerPotion();
 	public static final EntityType<PurgeGunship> PURGE_GUNSHIP = registerPurgeGunship();
 	public static final EntityType<SkyOverlord> SKY_OVERLORD = registerSkyOverlord();
 	public static final EntityType<VeteranRooster> VETERAN_ROOSTER = registerVeteranRooster();
@@ -36,10 +39,11 @@ public final class ModEntities {
 	public static final EntityType<PurgeChicken> RIOT_CHICKEN = registerRole("riot_chicken");
 	public static final EntityType<PurgeChicken> SERGEANT_CHICKEN = registerRole("sergeant_chicken");
 	public static final EntityType<PurgeChicken> MILITIA_CHICKEN = registerRole("militia_chicken");
+	public static final EntityType<PurgeChicken> RAVAGER_ASSAULT_CHICKEN =
+			registerRole("ravager_assault_chicken");
 	public static final EntityType<PurgeChicken> SCAVENGER_CHICKEN = registerRole("scavenger_chicken");
 	public static final EntityType<PurgeChicken> GUNSHIP_GUNNER = registerRole("gunship_gunner");
 	public static final EntityType<PurgeChicken> OVERLORD_ROOSTER = registerRole("overlord_rooster");
-	public static final EntityType<PurgeChicken> OVERLORD_RPG_CHICKEN = registerRole("overlord_rpg_chicken");
 	public static final EntityType<PurgeChicken> SUMMONER_GENERAL = registerRole("summoner_general");
 	public static final EntityType<PurgeChicken> TANK_GENERAL = registerRole("tank_general");
 	public static final EntityType<PurgeChicken> BOMBER_GENERAL = registerRole("bomber_general");
@@ -48,6 +52,7 @@ public final class ModEntities {
 	public static final EntityType<PurgeChicken> SUMMONED_CHICKEN = registerRole("summoned_chicken");
 	public static final EntityType<PurgeChicken> OUTPOST_GUARD = registerRole("outpost_guard");
 	public static final EntityType<PurgeChicken> GIGA_CHICKEN = registerRole("giga_chicken");
+	public static final EntityType<PurgeChicken> OVERLORD_CHICKEN = registerRole("overlord_chicken");
 
 	private ModEntities() {
 	}
@@ -70,14 +75,14 @@ public final class ModEntities {
 			Map.entry("rifle", MILITIA_CHICKEN),
 			Map.entry("militia", MILITIA_CHICKEN),
 			Map.entry("militia_chicken", MILITIA_CHICKEN),
+			Map.entry("ravager_assault_chicken", RAVAGER_ASSAULT_CHICKEN),
 			Map.entry("scavenger", SCAVENGER_CHICKEN),
 			Map.entry("scavenger_chicken", SCAVENGER_CHICKEN),
 			Map.entry("gunner", GUNSHIP_GUNNER),
 			Map.entry("gunship_gunner", GUNSHIP_GUNNER),
 			Map.entry("overlord", OVERLORD_ROOSTER),
 			Map.entry("overlord_rooster", OVERLORD_ROOSTER),
-			Map.entry("overlord_rpg", OVERLORD_RPG_CHICKEN),
-			Map.entry("overlord_rpg_chicken", OVERLORD_RPG_CHICKEN),
+			Map.entry("overlord_chicken", OVERLORD_CHICKEN),
 			Map.entry("summoner", SUMMONER_GENERAL),
 			Map.entry("summoner_general", SUMMONER_GENERAL),
 			Map.entry("tank", TANK_GENERAL),
@@ -96,9 +101,11 @@ public final class ModEntities {
 			Map.entry("giga_chicken", GIGA_CHICKEN));
 	private static final List<EntityType<? extends Chicken>> CHICKEN_TYPES = List.of(
 			WARRIOR_CHICKEN, RPG_CHICKEN, GRENADIER_CHICKEN, SNIPER_CHICKEN, MEDIC_CHICKEN,
-			RIOT_CHICKEN, SERGEANT_CHICKEN, MILITIA_CHICKEN, SCAVENGER_CHICKEN, GUNSHIP_GUNNER,
-			OVERLORD_ROOSTER, OVERLORD_RPG_CHICKEN, SUMMONER_GENERAL, TANK_GENERAL, BOMBER_GENERAL,
-			BUFFER_GENERAL, OVERLORD_BOMBARDIER, SUMMONED_CHICKEN, OUTPOST_GUARD, GIGA_CHICKEN);
+			RIOT_CHICKEN, SERGEANT_CHICKEN, MILITIA_CHICKEN, RAVAGER_ASSAULT_CHICKEN,
+			SCAVENGER_CHICKEN, GUNSHIP_GUNNER,
+			OVERLORD_ROOSTER, SUMMONER_GENERAL, TANK_GENERAL, BOMBER_GENERAL,
+			BUFFER_GENERAL, OVERLORD_BOMBARDIER, SUMMONED_CHICKEN, OUTPOST_GUARD, GIGA_CHICKEN,
+			OVERLORD_CHICKEN);
 
 	public static void register() {
 		FabricDefaultAttributeRegistry.register(SHIELD_GENERATOR_GOLEM, ShieldGeneratorGolem.createAttributes());
@@ -188,6 +195,24 @@ public final class ModEntities {
 				.sized(0.25F, 0.25F)
 				.clientTrackingRange(8)
 				);
+	}
+
+	private static EntityType<GrenadeEntity> registerGrenade() {
+		return registerMob("grenade", EntityType.Builder.of(GrenadeEntity::new, MobCategory.MISC)
+				.sized(0.25F, 0.75F)
+				.clientTrackingRange(8));
+	}
+
+	private static EntityType<BarrelEntity> registerBarrel() {
+		return registerMob("barrel", EntityType.Builder.of(BarrelEntity::new, MobCategory.MISC)
+				.sized(0.6F, 0.9F)
+				.clientTrackingRange(8));
+	}
+
+	private static EntityType<PotionEntity> registerPotion() {
+		return registerMob("potion", EntityType.Builder.of(PotionEntity::new, MobCategory.MISC)
+				.sized(0.25F, 0.25F)
+				.clientTrackingRange(8));
 	}
 
 	private static EntityType<PurgeGunship> registerPurgeGunship() {

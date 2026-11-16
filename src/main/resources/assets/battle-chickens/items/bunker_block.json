@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "battle-chickens:block/bunker_block"
+    "model": "battle-chickens:item/bunker_block"
   }
 }

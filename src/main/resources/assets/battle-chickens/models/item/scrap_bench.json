@@ -1,3 +1,6 @@
 {
-  "parent": "battle-chickens:block/scrap_bench"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "battle-chickens:block/scrap_bench"
+  }
 }

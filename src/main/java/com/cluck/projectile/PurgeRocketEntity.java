@@ -7,6 +7,7 @@ import com.cluck.event.PurgeUnits;
 import com.cluck.item.ModItems;
 import com.cluck.event.BossController;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -18,6 +19,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.Fireworks;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
@@ -25,23 +27,54 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
+
 public final class PurgeRocketEntity extends FireworkRocketEntity {
 	private static final float DIRECT_DAMAGE = 28;
 	private static final float SPLASH_DAMAGE = 10;
 	private static final double SPLASH_RADIUS = 3.5;
+	/** Plain fireworks expire in ~10–21 ticks; combat rockets need enough flight to reach distant targets. */
+	private static final int FLIGHT_DURATION = 8;
+	private static final int FORCE_DETONATE_TICKS = 95;
 	private BlockPos blockImpact;
+	private boolean detonated;
 
 	public PurgeRocketEntity(Level level, LivingEntity shooter) {
 		this(level, shooter, shooter.getLookAngle());
 	}
 
 	public PurgeRocketEntity(Level level, LivingEntity shooter, Vec3 direction) {
-		super(level, shooter.getX(), shooter.getEyeY() - 0.15, shooter.getZ(), new ItemStack(Items.FIREWORK_ROCKET));
+		this(level, shooter, direction, Vec3.ZERO);
+	}
+
+	public PurgeRocketEntity(Level level, LivingEntity shooter, Vec3 direction, Vec3 launchOffset) {
+		super(level, combatRocketStack(), shooter,
+				shooter.getX() + launchOffset.x,
+				shooter.getEyeY() - 0.15 + launchOffset.y,
+				shooter.getZ() + launchOffset.z,
+				true);
 		setOwner(shooter);
 		setCustomName(Component.literal("Purge Rocket"));
 		setCustomNameVisible(false);
 		direction = direction.normalize();
 		shoot(direction.x, direction.y, direction.z, 1.8F, 0.02F);
+	}
+
+	private static ItemStack combatRocketStack() {
+		ItemStack stack = new ItemStack(Items.FIREWORK_ROCKET);
+		stack.set(DataComponents.FIREWORKS, new Fireworks(FLIGHT_DURATION, List.of()));
+		return stack;
+	}
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (detonated || isRemoved() || !(level() instanceof ServerLevel serverLevel)) {
+			return;
+		}
+		if (tickCount >= FORCE_DETONATE_TICKS) {
+			detonate(serverLevel, position(), null);
+		}
 	}
 
 	@Override
@@ -64,6 +97,10 @@ public final class PurgeRocketEntity extends FireworkRocketEntity {
 	}
 
 	private void detonate(ServerLevel level, Vec3 impact, Entity directHit) {
+		if (detonated) {
+			return;
+		}
+		detonated = true;
 		detonate(level, impact, directHit, blockImpact, this, getOwner(), false, null);
 	}
 

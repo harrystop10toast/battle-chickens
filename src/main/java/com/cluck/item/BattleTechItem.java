@@ -291,13 +291,12 @@ public final class BattleTechItem extends Item {
 	}
 
 	private boolean beak47(ServerPlayer player) {
-		LivingEntity target = aimedTarget(player, 40);
 		if (!consume(player, Items.WHEAT_SEEDS)) {
 			player.sendSystemMessage(Component.literal("The Beak-47 needs wheat seeds."));
 			return false;
 		}
 		ServerLevel level = player.level();
-		fireBullet(player, target, 40);
+		LivingEntity target = fireBullet(player, 40, 0.055, 0.20);
 		if (target != null) {
 			damage(player, target, 8);
 			level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 0.6, target.getZ(),
@@ -365,18 +364,16 @@ public final class BattleTechItem extends Item {
 	}
 
 	private boolean sniperBeak(ServerPlayer player) {
-		LivingEntity target = aimedTarget(player, 64);
-		if (target == null) {
-			return false;
-		}
 		if (!consume(player, Items.ARROW)) {
 			player.sendSystemMessage(Component.literal("The Sniper Beak needs an arrow."));
 			return false;
 		}
-		fireBullet(player, target);
-		damage(player, target, 24);
-		player.level().sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1,
-				target.getZ(), 12, 0.15, 0.2, 0.15, 0.1);
+		LivingEntity target = fireBullet(player, 64, 0.004, 0.04);
+		if (target != null) {
+			damage(player, target, 24);
+			player.level().sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1,
+					target.getZ(), 12, 0.15, 0.2, 0.15, 0.1);
+		}
 		cooldown(player, 80);
 		return true;
 	}
@@ -491,23 +488,40 @@ public final class BattleTechItem extends Item {
 		}
 	}
 
-	private static void fireBullet(ServerPlayer player, LivingEntity target) {
-		fireBullet(player, target, 64);
-	}
-
-	private static void fireBullet(ServerPlayer player, LivingEntity target, double range) {
-		Vec3 direction = player.getLookAngle().normalize();
+	private static LivingEntity fireBullet(ServerPlayer player, double range,
+			double baseInaccuracy, double movementInaccuracy) {
+		ServerLevel level = player.level();
+		Vec3 direction = BulletSpread.apply(player.getLookAngle(),
+				baseInaccuracy + Math.min(player.getDeltaMovement().horizontalDistance(), 0.3)
+						* movementInaccuracy,
+				level.getRandom());
 		Vec3 start = player.getEyePosition().add(direction.scale(0.45));
-		Vec3 end;
-		if (target != null) {
-			end = target.getBoundingBox().getCenter();
-		} else {
-			Vec3 rangeEnd = start.add(direction.scale(range));
-			var hit = player.level().clip(new ClipContext(start, rangeEnd,
-					ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-			end = hit.getType() == HitResult.Type.MISS ? rangeEnd : hit.getLocation();
+		Vec3 rangeEnd = start.add(direction.scale(range));
+		var blockHit = level.clip(new ClipContext(start, rangeEnd,
+				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+		Vec3 traceEnd = blockHit.getType() == HitResult.Type.MISS
+				? rangeEnd : blockHit.getLocation();
+		LivingEntity target = null;
+		Vec3 targetHit = null;
+		double closest = Double.MAX_VALUE;
+		AABB search = player.getBoundingBox().expandTowards(direction.scale(range)).inflate(1);
+		for (LivingEntity candidate : level.getEntitiesOfClass(LivingEntity.class, search,
+				entity -> entity != player && entity.isAlive())) {
+			var entityHit = candidate.getBoundingBox().inflate(0.1).clip(start, traceEnd);
+			if (entityHit.isPresent()) {
+				double distance = start.distanceToSqr(entityHit.get());
+				if (distance < closest) {
+					closest = distance;
+					target = candidate;
+					targetHit = entityHit.get();
+				}
+			}
 		}
-		BulletTracer.fire(player.level(), start, end);
+		if (targetHit != null) {
+			traceEnd = targetHit;
+		}
+		BulletTracer.fire(level, start, traceEnd);
+		return target;
 	}
 
 	private static boolean consume(ServerPlayer player, Item item) {

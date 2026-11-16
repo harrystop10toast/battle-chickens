@@ -3,6 +3,7 @@ package com.cluck.event;
 import com.cluck.BattleChickens;
 import com.cluck.entity.OverlordBeast;
 import com.cluck.entity.ModEntities;
+import com.cluck.entity.GrenadeEntity;
 import com.cluck.entity.ShieldGeneratorGolem;
 import com.cluck.entity.EnragedGolem;
 import com.cluck.entity.SkyOverlord;
@@ -26,7 +27,6 @@ import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -51,7 +51,7 @@ public final class BossController {
 	private static final Map<UUID, Vec3> ORBITAL_MARKS = new HashMap<>();
 	private static final Map<UUID, List<MarkedBomb>> BOMB_MARKS = new HashMap<>();
 	private static final Map<UUID, LightningChase> LIGHTNING_MARKS = new HashMap<>();
-	private static final Set<UUID> SONIC_BOOM_USED = new HashSet<>();
+	private static final Map<UUID, Integer> SONIC_BOOM_COOLDOWNS = new HashMap<>();
 	private static final Map<UUID, SpinAttack> SPIN_ATTACKS = new HashMap<>();
 	private static final Map<UUID, List<FlyingBossBomb>> FLYING_BOMBS = new HashMap<>();
 	private static final Map<UUID, PursuitState> PURSUIT_STATES = new HashMap<>();
@@ -61,6 +61,8 @@ public final class BossController {
 	private static final Map<UUID, Integer> BOULDER_COOLDOWNS = new HashMap<>();
 	private static final Map<UUID, BoulderVolley> BOULDER_VOLLEYS = new HashMap<>();
 	private static final Map<UUID, SonicBoom> SONIC_BOOMS = new HashMap<>();
+	private static final int SONIC_BOOM_COOLDOWN_TICKS = 600;
+	private static final int ORBITAL_LOCK_TICKS = 40;
 	private static final Map<UUID, Integer> GENERATOR_PULSES = new HashMap<>();
 	private static final Map<UUID, List<GeneratorPulse>> GENERATOR_PROJECTILES = new HashMap<>();
 	private static final Map<UUID, List<SoulFlameZone>> SOUL_FLAME_ZONES = new HashMap<>();
@@ -103,7 +105,7 @@ public final class BossController {
 	private record GeneratorPulse(UUID target, Vec3 position, Vec3 direction, int age) {
 	}
 
-	private record MarkedBomb(int detonationTick, ItemEntity projectile) {
+	private record MarkedBomb(GrenadeEntity projectile) {
 	}
 
 	private record LightningChase(Vec3 impact, int strikeTick) {
@@ -233,8 +235,7 @@ public final class BossController {
 				Vec3 aim = target.position().add(aimOffset(level, target));
 				Vec3 impact = aim.add(index * 7.0,
 						0, level.getRandom().nextInt(7) - 3);
-				barrage.add(new MarkedBomb(boss.tickCount + 40,
-						PurgeUnits.throwBossGrenade(level, boss, impact)));
+				barrage.add(new MarkedBomb(PurgeUnits.throwBossGrenade(level, boss, impact)));
 			}
 			BOMB_MARKS.put(boss.getUUID(), barrage);
 			showCombatAlert(target, Component.literal("Phantom bombardment — leave the marked zones!"));
@@ -271,13 +272,18 @@ public final class BossController {
 		if (bombs == null) {
 			return;
 		}
-		if (!bombs.isEmpty() && boss.tickCount >= bombs.getFirst().detonationTick()) {
-			for (MarkedBomb bomb : bombs) {
-				if (bomb.projectile() != null) {
-					PurgeUnits.detonateBossGrenade(level, boss, bomb.projectile().position(), threat);
-					bomb.projectile().discard();
-				}
+		var iterator = bombs.iterator();
+		while (iterator.hasNext()) {
+			GrenadeEntity projectile = iterator.next().projectile();
+			if (projectile == null || !projectile.isAlive()) {
+				iterator.remove();
+			} else if (projectile.shouldDetonate()) {
+				PurgeUnits.detonateBossGrenade(level, boss, projectile.position(), threat);
+				projectile.discard();
+				iterator.remove();
 			}
+		}
+		if (bombs.isEmpty()) {
 			BOMB_MARKS.remove(boss.getUUID());
 		}
 	}
@@ -547,6 +553,9 @@ public final class BossController {
 			level.sendParticles(ParticleTypes.FLAME, boss.getX(), boss.getEyeY(), boss.getZ(),
 					12, 0.3, 0.2, 0.3, 0.08);
 		}
+		if (boss.tickCount % 600 == 0) {
+			PurgeUnits.throwOverlordBarrel(level, boss, target, threat);
+		}
 		if (boss.tickCount % 120 == 0) {
 			PurgeUnits.spawnRavagerMilitia(level, boss, target, threat);
 		}
@@ -612,13 +621,22 @@ public final class BossController {
 				}
 			}
 			Vec3 impact = ORBITAL_MARKS.get(boss.getUUID());
-			boolean canHit = impact != null && level.canSeeSky(BlockPos.containing(impact))
-					&& PurgeUnits.hasBlastExposure(level, impact, target);
-			if (orbitalTick < 40 && canHit && boss.tickCount % 120 == 0) {
+			boolean marked = impact != null && level.canSeeSky(BlockPos.containing(impact));
+			boolean canHit = marked && PurgeUnits.hasBlastExposure(level, impact, target);
+			if (orbitalTick == 0 && marked) {
 				showCombatAlert(target, Component.literal("Orbital strike incoming — get under cover!"));
+				level.playSound(null, BlockPos.containing(impact), net.minecraft.sounds.SoundEvents.BEACON_ACTIVATE,
+						net.minecraft.sounds.SoundSource.HOSTILE, 2.5F, 0.55F);
 			}
-			if (orbitalTick == 40 && canHit) {
-				level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 1, impact.z, 1, 0, 0, 0, 0);
+			if (orbitalTick < ORBITAL_LOCK_TICKS && marked) {
+				renderOrbitalLaser(level, impact);
+			}
+			if (orbitalTick == ORBITAL_LOCK_TICKS && canHit) {
+				level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y + 1, impact.z, 1, 0, 0, 0, 0);
+				level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 1.5, impact.z, 8, 1.2, 0.6, 1.2, 0.08);
+				level.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 1, impact.z, 24, 1.5, 0.4, 1.5, 0.05);
+				level.playSound(null, BlockPos.containing(impact), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
+						net.minecraft.sounds.SoundSource.HOSTILE, 4.0F, 0.7F);
 				for (LivingEntity victim : level.getEntitiesOfClass(LivingEntity.class,
 						new AABB(impact, impact).inflate(7), entity -> entity != boss && entity.isAlive() && !isGenerator(entity))) {
 					if (!PurgeUnits.hasBlastExposure(level, impact, victim)) {
@@ -633,10 +651,24 @@ public final class BossController {
 				PurgeUnits.destroyBossImpact(level, impact, boss);
 				PurgeUnits.spawnBossReinforcements(level, boss, target, threat);
 			}
-			if (orbitalTick == 40) {
+			if (orbitalTick == ORBITAL_LOCK_TICKS) {
 				ORBITAL_MARKS.remove(boss.getUUID());
 			}
 		}
+	}
+
+	private static void renderOrbitalLaser(ServerLevel level, Vec3 impact) {
+		int groundY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+				BlockPos.containing(impact).getX(), BlockPos.containing(impact).getZ());
+		double topY = Math.max(impact.y + 32, groundY + 40);
+		for (double y = groundY; y <= topY; y += 1.5) {
+			level.sendParticles(new DustParticleOptions(0xFF2200, 1.4F),
+					impact.x, y, impact.z, 2, 0.05, 0.05, 0.05, 0);
+		}
+		level.sendParticles(ParticleTypes.END_ROD, impact.x, groundY + 0.2, impact.z,
+				4, 0.35, 0.05, 0.35, 0.01);
+		level.sendParticles(ParticleTypes.CRIT, impact.x, groundY + 0.15, impact.z,
+				6, 0.9, 0.05, 0.9, 0.02);
 	}
 
 	private static void tickRavagerMelee(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
@@ -898,8 +930,8 @@ public final class BossController {
 
 	private static void tickSonicBoom(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		SonicBoom attack = SONIC_BOOMS.get(boss.getUUID());
-		if (attack == null && !SONIC_BOOM_USED.contains(boss.getUUID())
-				&& boss.tickCount > 100 && boss.tickCount % 240 == 0
+		if (attack == null
+				&& boss.tickCount >= SONIC_BOOM_COOLDOWNS.getOrDefault(boss.getUUID(), 240)
 				&& !RAVAGER_CHARGES.containsKey(boss.getUUID())
 				&& !RAVAGER_JUMPS.containsKey(boss.getUUID())
 				&& !BOULDER_WARNINGS.containsKey(boss.getUUID())
@@ -907,7 +939,8 @@ public final class BossController {
 				&& PurgeUnits.hasClearAttackPath(level, boss, target)) {
 			attack = new SonicBoom(PurgeUnits.bossAimPosition(level, target), boss.tickCount + 100);
 			SONIC_BOOMS.put(boss.getUUID(), attack);
-			SONIC_BOOM_USED.add(boss.getUUID());
+			SONIC_BOOM_COOLDOWNS.put(boss.getUUID(), boss.tickCount + SONIC_BOOM_COOLDOWN_TICKS);
+			boss.getNavigation().stop();
 			showCombatAlert(target, Component.literal(
 					"The Overlord channels a sonic boom! The blast will erupt in five seconds!"));
 			level.playSound(null, boss.blockPosition(), net.minecraft.sounds.SoundEvents.WARDEN_SONIC_CHARGE,
@@ -916,19 +949,40 @@ public final class BossController {
 		if (attack == null) {
 			return;
 		}
+		boss.getNavigation().stop();
+		Vec3 origin = boss.getEyePosition();
 		Vec3 aim = attack.aim();
-		Vec3 direction = aim.subtract(boss.getEyePosition()).normalize();
-		Vec3 origin = boss.getEyePosition().add(direction.scale(3.0));
+		Vec3 toAim = aim.subtract(origin);
+		if (toAim.lengthSqr() < 0.01) {
+			toAim = boss.getLookAngle();
+		}
+		Vec3 direction = toAim.normalize();
+		double markedLength = Math.max(24.0, aim.distanceTo(origin) + 16.0);
+		double beamLength = Math.min(128.0, markedLength);
 		if (boss.tickCount < attack.fireAt()) {
+			if (boss.tickCount % 4 == 0) {
+				for (double distance = 0; distance <= beamLength; distance += 2.5) {
+					Vec3 point = origin.add(direction.scale(distance));
+					if (level.clip(new net.minecraft.world.level.ClipContext(
+							origin, point, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+							net.minecraft.world.level.ClipContext.Fluid.NONE, boss)).getType()
+							!= HitResult.Type.MISS) {
+						break;
+					}
+					level.sendParticles(new DustParticleOptions(0x39D0E0, 1.2F),
+							point.x, point.y, point.z, 1, 0.05, 0.05, 0.05, 0);
+				}
+				level.sendParticles(ParticleTypes.SONIC_BOOM, aim.x, aim.y, aim.z, 1, 0.2, 0.2, 0.2, 0);
+			}
 			return;
 		}
-		double beamLength = Math.min(128, aim.distanceTo(origin));
-		for (double distance = 0; distance <= beamLength; distance += 1.5) {
+		for (double distance = 0; distance <= beamLength; distance += 1.25) {
 			Vec3 point = origin.add(direction.scale(distance));
 			if (level.clip(new net.minecraft.world.level.ClipContext(
 					origin, point, net.minecraft.world.level.ClipContext.Block.COLLIDER,
 					net.minecraft.world.level.ClipContext.Fluid.NONE, boss)).getType()
 					!= HitResult.Type.MISS) {
+				beamLength = distance;
 				break;
 			}
 			level.sendParticles(ParticleTypes.SONIC_BOOM, point.x, point.y, point.z, 1, 0, 0, 0, 0);
@@ -944,12 +998,13 @@ public final class BossController {
 			if (!PurgeUnits.hasClearAttackPath(level, boss, victim)) {
 				continue;
 			}
-			victim.hurtServer(level, level.damageSources().mobAttack(boss),
+			victim.hurtServer(level, level.damageSources().sonicBoom(boss),
 					(35 + threat * 5) * BattleChickens.CONFIG.enemyDamageMultiplier());
 			applyDaySevenKnockback(victim, direction.scale(1.8).add(0, 0.35, 0));
 		}
 		level.playSound(null, boss.blockPosition(), net.minecraft.sounds.SoundEvents.WARDEN_SONIC_BOOM,
 				net.minecraft.sounds.SoundSource.HOSTILE, 4.0F, 0.75F);
+		showCombatAlert(target, Component.literal("Sonic boom!"));
 		SONIC_BOOMS.remove(boss.getUUID());
 	}
 
@@ -1411,10 +1466,10 @@ public final class BossController {
 		List<MarkedBomb> markedBombs = BOMB_MARKS.remove(entity.getUUID());
 		if (markedBombs != null) {
 			markedBombs.stream().map(MarkedBomb::projectile).filter(java.util.Objects::nonNull)
-					.forEach(ItemEntity::discard);
+					.forEach(GrenadeEntity::discard);
 		}
 		LIGHTNING_MARKS.remove(entity.getUUID());
-		SONIC_BOOM_USED.remove(entity.getUUID());
+		SONIC_BOOM_COOLDOWNS.remove(entity.getUUID());
 		SPIN_ATTACKS.remove(entity.getUUID());
 		PURSUIT_STATES.remove(entity.getUUID());
 		RAVAGER_CHARGES.remove(entity.getUUID());

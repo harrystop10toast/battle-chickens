@@ -58,6 +58,7 @@ public final class PurgeManager {
 	private static final Set<UUID> DAMAGE_CAP_REENTRY = new HashSet<>();
 	private static final Set<UUID> FLOCKGUARD_REENTRY = new HashSet<>();
 	private static final Set<UUID> EXPLOSION_SHIELD_REENTRY = new HashSet<>();
+	private static final Set<UUID> TANK_GENERAL_GUARD_REENTRY = new HashSet<>();
 
 	private PurgeManager() {
 	}
@@ -67,6 +68,30 @@ public final class PurgeManager {
 		ServerTickEvents.END_SERVER_TICK.register(PurgeManager::tick);
 		ServerLivingEntityEvents.AFTER_DEATH.register(PurgeManager::onDeath);
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+			Entity attacker = source.getEntity();
+			if (attacker instanceof net.minecraft.world.entity.projectile.Projectile projectile
+					&& projectile.getOwner() != null) {
+				attacker = projectile.getOwner();
+			}
+			if (entity instanceof Chicken rider
+					&& rider.getVehicle() instanceof LivingEntity mount
+					&& ((hasName(rider, "Overlord Chicken") || hasName(rider, "Overlord Sniper"))
+							&& PurgeUnits.isBoss(mount)
+							|| hasName(rider, "Sky Gunner") && BossController.isAerialBoss(mount))) {
+				if (attacker instanceof ServerPlayer && entity.level() instanceof ServerLevel level) {
+					mount.hurtServer(level, source, amount);
+				}
+				return false;
+			}
+			if (PurgeUnits.isFinalBoss(entity) && !(attacker instanceof ServerPlayer)) {
+				return false;
+			}
+			if (PurgeUnits.isOverlordGeneral(entity) && PurgeUnits.isPurgeAlly(attacker)) {
+				return false;
+			}
+			if (TANK_GENERAL_GUARD_REENTRY.contains(entity.getUUID())) {
+				return true;
+			}
 			if (DAMAGE_CAP_REENTRY.contains(entity.getUUID())) {
 				return true;
 			}
@@ -75,11 +100,6 @@ public final class PurgeManager {
 			}
 			if (EXPLOSION_SHIELD_REENTRY.contains(entity.getUUID())) {
 				return true;
-			}
-			Entity attacker = source.getEntity();
-			if (attacker instanceof net.minecraft.world.entity.projectile.Projectile projectile
-					&& projectile.getOwner() != null) {
-				attacker = projectile.getOwner();
 			}
 			if (entity instanceof LivingEntity target && attacker instanceof LivingEntity livingAttacker
 					&& entity != attacker && entity.level() instanceof ServerLevel level
@@ -92,6 +112,34 @@ public final class PurgeManager {
 					&& source.getSourcePosition() != null
 					&& !PurgeUnits.hasBlastExposure(level, source.getSourcePosition(), target)) {
 				return false;
+			}
+			if (entity instanceof Chicken chicken && PurgeUnits.isUnit(chicken) && amount > 0.0F
+					&& entity.level() instanceof ServerLevel level
+					&& !hasName(chicken, "Tank General")
+					&& (!PurgeUnits.isPurgeAlly(attacker)
+							|| PurgeUnits.isBoss(attacker)
+							|| BossController.isAerialBoss(attacker)
+							|| BossController.isGenerator(attacker))) {
+				Chicken tankGeneral = level.getEntitiesOfClass(Chicken.class,
+						chicken.getBoundingBox().inflate(128.0),
+						candidate -> candidate.isAlive() && candidate != chicken
+								&& hasName(candidate, "Tank General"))
+						.stream()
+						.min((first, second) -> Double.compare(
+								chicken.distanceToSqr(first), chicken.distanceToSqr(second)))
+						.orElse(null);
+				if (tankGeneral != null) {
+					TANK_GENERAL_GUARD_REENTRY.add(tankGeneral.getUUID());
+					TANK_GENERAL_GUARD_REENTRY.add(chicken.getUUID());
+					try {
+						tankGeneral.hurtServer(level, source, amount * 0.75F);
+						chicken.hurtServer(level, source, amount * 0.25F);
+					} finally {
+						TANK_GENERAL_GUARD_REENTRY.remove(tankGeneral.getUUID());
+						TANK_GENERAL_GUARD_REENTRY.remove(chicken.getUUID());
+					}
+					return false;
+				}
 			}
 			if (entity instanceof ServerPlayer player && source.is(DamageTypeTags.IS_EXPLOSION)
 					&& player.getOffhandItem().is(ModItems.CLUCK_SHIELD)
@@ -109,10 +157,15 @@ public final class PurgeManager {
 					&& entity.level() instanceof ServerLevel level
 					&& chicken.getCustomName() != null) {
 				String riderName = chicken.getCustomName().getString();
-				boolean sharesRavagerHealth = riderName.equals("Overlord Rooster") && PurgeUnits.isBoss(mount);
+				boolean sharesRavagerHealth = (riderName.equals("Overlord Rooster")
+						|| riderName.equals("Overlord Gunner")
+						|| riderName.equals("Overlord Chicken")
+						|| riderName.equals("Overlord Sniper")) && PurgeUnits.isBoss(mount);
 				boolean sharesPhantomHealth = riderName.equals("Overlord Bombardier")
 						&& BossController.isAerialBoss(mount);
-				if (sharesRavagerHealth || sharesPhantomHealth) {
+				boolean sharesGunnerHealth = riderName.equals("Sky Gunner")
+						&& BossController.isAerialBoss(mount);
+				if (sharesRavagerHealth || sharesPhantomHealth || sharesGunnerHealth) {
 					if (attacker != mount) {
 						mount.hurtServer(level, source, amount);
 					}
@@ -133,10 +186,7 @@ public final class PurgeManager {
 			}
 			if (PurgeUnits.isPurgeAlly(entity) && PurgeUnits.isPurgeAlly(attacker)) {
 				if (BossController.isGenerator(entity)) {
-					// Shield golem can be hit by Sky Overlord nuke/contact to make the fight easier.
-					if (!BossController.isAerialBoss(attacker)) {
-						return false;
-					}
+					return false;
 				} else {
 					boolean attackerBoss = PurgeUnits.isBoss(attacker) || BossController.isAerialBoss(attacker);
 					boolean attackerChicken = PurgeUnits.isChickenAlly(attacker);
@@ -325,6 +375,7 @@ public final class PurgeManager {
 		for (ServerLevel level : server.getAllLevels()) {
 			BulletTracer.tick(level);
 			PurgeUnits.tickGrenadeFlights(level);
+			PurgeUnits.tickBarrelFlights(level);
 			if (level.getGameTime() % 20 == 0) {
 				ScarecrowTurretItem.tick(level);
 			}
@@ -354,7 +405,7 @@ public final class PurgeManager {
 			bossAbandonmentTicks = 0;
 			return;
 		}
-		if (server.overworld().getGameTime() % 1200 == 0) {
+		if (data.currentDay() < data.eventDays() && server.overworld().getGameTime() % 1200 == 0) {
 			for (ServerPlayer player : players) {
 				if (player.isAlive()) {
 					PurgeUnits.spawnDailySupport(player, data);
@@ -371,7 +422,7 @@ public final class PurgeManager {
 		if (dayAdvanced) {
 			server.getPlayerList().broadcastSystemMessage(Component.literal(
 					"Purge Day " + day + " of " + data.eventDays() + (day == data.eventDays()
-							? " begins: the Overlord is here."
+							? " begins: the Overlord and Sky Overlord are here."
 							: " begins.")), false);
 			if (day > 1) {
 				for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -394,30 +445,31 @@ public final class PurgeManager {
 					if (PurgeUnits.spawnOverlord(players, data)) {
 						data.markBossSpawned();
 						server.getPlayerList().broadcastSystemMessage(Component.literal(
-								"The Overlord has entered the battlefield! Defeat it before the meltdown."), false);
-					}
-				}
-			} else if (data.markDaySpawned()) {
-				server.getPlayerList().broadcastSystemMessage(Component.literal(
-						"Naturally spawned chickens are being militarized. Stay alert near the flock."), false);
-			}
-			if (server.overworld().getGameTime() % 200 == 0
-					&& data.currentDay() >= 4 && data.currentDay() < data.eventDays() && !data.outpostSpawned()) {
-				for (ServerPlayer player : players) {
-					if (PurgeOutposts.spawn(player, data)) {
-						data.markOutpostSpawned();
-						server.getPlayerList().broadcastSystemMessage(Component.literal(
-								"A chicken outpost has been located. Raid its chest for rare salvage."), false);
-						break;
+								"The Overlord and Sky Overlord have entered the battlefield! Defeat both before the meltdown."),
+								false);
 					}
 				}
 			}
 		}
 
+		long dayTime = server.overworld().getOverworldClockTime();
+		if (data.currentDay() < data.eventDays()
+				&& Math.floorMod(dayTime, 24_000L) < 20L
+				&& players.stream().anyMatch(ServerPlayer::isAlive)
+				&& data.markDaySpawned()) {
+			int spawned = 0;
+			for (ServerLevel level : server.getAllLevels()) {
+				spawned += PurgeUnits.spawnMorningSiege(level, players, data);
+			}
+			server.getPlayerList().broadcastSystemMessage(Component.literal(
+					"Dawn siege on Purge Day " + data.currentDay() + " (Threat " + data.threat()
+							+ "): " + spawned + " military chickens are attacking."), false);
+		}
+
 		for (ServerLevel level : server.getAllLevels()) {
 			PurgeUnits.tickUnits(level, players, data.threat());
-			PurgeUnits.spawnFinalDayRpgWave(level, players, data);
 			if (data.bossSpawned()) {
+				PurgeUnits.tickOverlordGeneralRespawns(level, players, data);
 				BossController.tick(level, players, data.threat());
 			}
 		}
@@ -945,6 +997,11 @@ public final class PurgeManager {
 
 	private static float progress(float health, float maxHealth) {
 		return maxHealth <= 0 ? 0 : Math.max(0, Math.min(1, health / maxHealth));
+	}
+
+	private static boolean hasName(Entity entity, String name) {
+		return entity != null && entity.getCustomName() != null
+				&& entity.getCustomName().getString().equals(name);
 	}
 
 	private static void addPlayers(ServerBossEvent event, MinecraftServer server) {

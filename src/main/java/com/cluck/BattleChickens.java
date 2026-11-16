@@ -2,6 +2,7 @@ package com.cluck;
 
 import com.cluck.config.PurgeConfig;
 import com.cluck.event.PurgeManager;
+import com.cluck.event.StructureLootFix;
 import com.cluck.entity.ModEntities;
 import com.cluck.item.ModItems;
 import net.fabricmc.api.ModInitializer;
@@ -20,6 +21,7 @@ public class BattleChickens implements ModInitializer {
 		ModEntities.register();
 		ModItems.register();
 		PurgeManager.register();
+		StructureLootFix.register();
 		LOGGER.info("Chicken Overlord: The Great Purge foundation loaded.");
 	}
 

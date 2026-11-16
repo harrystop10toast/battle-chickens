@@ -1,8 +1,24 @@
 {
-  "parent": "minecraft:item/handheld",
   "textures": {
-    "layer0": "battle-chickens:item/medic_syringe"
+    "particle": "battle-chickens:item/chicken",
+    "0": "battle-chickens:item/chicken"
   },
+  "elements": [
+    {
+      "from": [1.6, 0, 7.5],
+      "to": [14.4, 16, 8.5],
+      "faces": {
+        "north": {
+          "uv": [10, 0.25, 16, 7.75],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [10, 0.25, 16, 7.75],
+          "texture": "#0"
+        }
+      }
+    }
+  ],
   "display": {
     "thirdperson_righthand": {
       "rotation": [0, -90, 55],

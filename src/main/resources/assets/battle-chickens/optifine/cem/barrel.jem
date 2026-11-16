@@ -1,0 +1,75 @@
+{
+	"credit": "Made with Blockbench",
+	"textureSize": [128, 128],
+	"texture": "battle-chickens:textures/entity/barrel.png",
+	"models": [
+		{
+			"part": "Sketchfab_model",
+			"id": "Sketchfab_model",
+			"invertAxis": "xy",
+			"translate": [4, 0, 4],
+			"submodels": [
+				{
+					"id": "root",
+					"invertAxis": "xy",
+					"translate": [-4, 0, -4],
+					"submodels": [
+						{
+							"id": "GLTF_SceneRootNode",
+							"invertAxis": "xy",
+							"translate": [0, 0, 0],
+							"submodels": [
+								{
+									"id": "cube_0",
+									"invertAxis": "xy",
+									"translate": [4, 0.5, 4],
+									"submodels": [
+										{
+											"id": "Object_4",
+											"invertAxis": "xy",
+											"translate": [0, 0, 0],
+											"boxes": [
+												{
+													"coordinates": [-3.5, -0.5, -3.5, 7, 11.5, 7],
+													"uvNorth": [0, 45, 13, 68],
+													"uvEast": [13, 45, 26, 68],
+													"uvSouth": [39, 45, 52, 68],
+													"uvWest": [26, 45, 39, 68],
+													"uvUp": [26, 32, 39, 45],
+													"uvDown": [26, 32, 39, 45]
+												}
+											]
+										}
+									]
+								},
+								{
+									"id": "cube_1",
+									"invertAxis": "xy",
+									"translate": [4, 1, 4],
+									"submodels": [
+										{
+											"id": "Object_6",
+											"invertAxis": "xy",
+											"translate": [0, 0, 0],
+											"boxes": [
+												{
+													"coordinates": [-4, 0.5, -4, 8, 8, 8],
+													"uvNorth": [0, 16, 16, 32],
+													"uvEast": [48, 16, 64, 32],
+													"uvSouth": [32, 16, 48, 32],
+													"uvWest": [16, 16, 32, 32],
+													"uvUp": [16, 0, 32, 16],
+													"uvDown": [16, 0, 32, 16]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

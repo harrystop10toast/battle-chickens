@@ -52,11 +52,12 @@ public final class PurgeWorldData extends SavedData {
 			Codec.INT.optionalFieldOf("spawned_day", 0).forGetter(data -> data.spawnedDay),
 			Codec.BOOL.optionalFieldOf("boss_spawned", false).forGetter(data -> data.bossSpawned),
 			Codec.INT.optionalFieldOf("boss_ticks", 0).forGetter(data -> data.bossTicks),
+			Codec.LONG.optionalFieldOf("next_general_respawn_tick", 0L)
+					.forGetter(data -> data.nextGeneralRespawnTick),
 			Codec.BOOL.optionalFieldOf("dominion", false).forGetter(data -> data.dominion),
 			Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("flockbreaker_ranks", Map.of()).forGetter(data -> data.ranks),
 			Codec.unboundedMap(Codec.STRING, Codec.list(Codec.STRING)).optionalFieldOf("blueprints", Map.of()).forGetter(data -> data.blueprints),
 			Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("deaths_by_player", Map.of()).forGetter(data -> data.deathsByPlayer),
-			Codec.BOOL.optionalFieldOf("outpost_spawned", false).forGetter(data -> data.outpostSpawned),
 			Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("contributions", Map.of()).forGetter(data -> data.contributions),
 			Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("nemesis_kills", Map.of()).forGetter(data -> data.nemesisKills),
 			EventMeta.CODEC.optionalFieldOf("event_meta", new EventMeta(false, 0L, Map.of(), Map.of(), Map.of()))
@@ -75,11 +76,11 @@ public final class PurgeWorldData extends SavedData {
 	private int spawnedDay;
 	private boolean bossSpawned;
 	private int bossTicks;
+	private long nextGeneralRespawnTick;
 	private boolean dominion;
 	private final Map<String, Integer> ranks;
 	private final Map<String, List<String>> blueprints;
 	private final Map<String, Integer> deathsByPlayer;
-	private boolean outpostSpawned;
 	private final Map<String, Integer> contributions;
 	private final Map<String, Integer> nemesisKills;
 	private boolean veteranTraderSpawned;
@@ -89,16 +90,17 @@ public final class PurgeWorldData extends SavedData {
 	private final Map<String, WeatherSnapshot> weatherSnapshots;
 
 	public PurgeWorldData() {
-		this(false, 0, 0, BattleChickens.CONFIG.eventDays(), 0, 0, false, 0, false,
-				Map.of(), Map.of(), Map.of(), false, Map.of(), Map.of(),
+		this(false, 0, 0, BattleChickens.CONFIG.eventDays(), 0, 0, false, 0, 0L, false,
+				Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
 				new EventMeta(false, 0, Map.of(), Map.of(), Map.of()));
 	}
 
 	private PurgeWorldData(boolean active, long elapsedTicks, int threat, int eventDays, int currentDay,
-						   int spawnedDay, boolean bossSpawned, int bossTicks, boolean dominion,
+						   int spawnedDay, boolean bossSpawned, int bossTicks, long nextGeneralRespawnTick,
+						   boolean dominion,
 						   Map<String, Integer> ranks, Map<String, List<String>> blueprints,
-						   Map<String, Integer> deathsByPlayer, boolean outpostSpawned,
-						   Map<String, Integer> contributions, Map<String, Integer> nemesisKills,
+						   Map<String, Integer> deathsByPlayer, Map<String, Integer> contributions,
+						   Map<String, Integer> nemesisKills,
 						   EventMeta eventMeta) {
 		this.active = active;
 		this.elapsedTicks = elapsedTicks;
@@ -108,12 +110,12 @@ public final class PurgeWorldData extends SavedData {
 		this.spawnedDay = spawnedDay;
 		this.bossSpawned = bossSpawned;
 		this.bossTicks = bossTicks;
+		this.nextGeneralRespawnTick = nextGeneralRespawnTick;
 		this.dominion = dominion;
 		this.ranks = new HashMap<>(ranks);
 		this.blueprints = new HashMap<>();
 		blueprints.forEach((player, known) -> this.blueprints.put(player, new ArrayList<>(known)));
 		this.deathsByPlayer = new HashMap<>(deathsByPlayer);
-		this.outpostSpawned = outpostSpawned;
 		this.contributions = new HashMap<>(contributions);
 		this.nemesisKills = new HashMap<>(nemesisKills);
 		this.veteranTraderSpawned = eventMeta.veteranTraderSpawned();
@@ -173,10 +175,10 @@ public final class PurgeWorldData extends SavedData {
 		this.spawnedDay = 0;
 		this.bossSpawned = false;
 		this.bossTicks = 0;
+		this.nextGeneralRespawnTick = 0;
 		this.deathsByPlayer.clear();
 		this.civilianChickenKills.clear();
 		this.contributions.clear();
-		this.outpostSpawned = false;
 		this.weatherSnapshots.clear();
 		setDirty();
 		return true;
@@ -185,6 +187,7 @@ public final class PurgeWorldData extends SavedData {
 	public void stop(boolean failed, boolean dominionEnabled, long currentWorldTick, int cooldownSeconds) {
 		active = false;
 		dominion = failed && dominionEnabled;
+		nextGeneralRespawnTick = 0;
 		nextEventTick = currentWorldTick + cooldownSeconds * 20L;
 		setDirty();
 	}
@@ -270,27 +273,27 @@ public final class PurgeWorldData extends SavedData {
 		return true;
 	}
 
-	public boolean markOutpostSpawned() {
-		if (outpostSpawned) {
-			return false;
-		}
-		outpostSpawned = true;
-		setDirty();
-		return true;
-	}
-
-	public boolean outpostSpawned() {
-		return outpostSpawned;
-	}
-
 	public boolean markBossSpawned() {
 		if (bossSpawned) {
 			return false;
 		}
 		bossSpawned = true;
 		bossTicks = 0;
+		nextGeneralRespawnTick = 0;
 		setDirty();
 		return true;
+	}
+
+	public long nextGeneralRespawnTick() {
+		return nextGeneralRespawnTick;
+	}
+
+	public void scheduleGeneralRespawn(long tick) {
+		long scheduledTick = Math.max(0, tick);
+		if (nextGeneralRespawnTick != scheduledTick) {
+			nextGeneralRespawnTick = scheduledTick;
+			setDirty();
+		}
 	}
 
 	public int bossTicks() {

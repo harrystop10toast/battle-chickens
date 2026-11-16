@@ -1,0 +1,543 @@
+{
+	"credit": "Made with Blockbench",
+	"textureSize": [128, 64],
+	"models": [
+		{
+			"part": "head",
+			"id": "head",
+			"invertAxis": "xy",
+			"translate": [0, -9, 4],
+			"texture": "battle-chickens:textures/entity/chicken/sniper.png",
+			"textureSize": [128, 64],
+			"boxes": [
+				{"coordinates": [-2, 9, -6, 4, 6, 3], "textureOffset": [64, 0]}
+			],
+			"submodels": [
+				{
+					"id": "helmet",
+					"invertAxis": "xy",
+					"translate": [-2.365, 13.2, -4.25],
+					"boxes": [
+						{
+							"coordinates": [-0.285, -0.55, -0.8, 0.57, 1.1, 1.6],
+							"uvNorth": [24, 50, 32, 58],
+							"uvEast": [24, 50, 32, 58],
+							"uvSouth": [24, 50, 32, 58],
+							"uvWest": [24, 50, 32, 58],
+							"uvUp": [24, 50, 32, 58],
+							"uvDown": [24, 50, 32, 58]
+						},
+						{
+							"coordinates": [2.185, 0.35, -2.51, 0.36, 0.23, 0.27],
+							"uvNorth": [24, 50, 32, 58],
+							"uvEast": [24, 50, 32, 58],
+							"uvSouth": [24, 50, 32, 58],
+							"uvWest": [24, 50, 32, 58],
+							"uvUp": [24, 50, 32, 58],
+							"uvDown": [24, 50, 32, 58]
+						},
+						{
+							"coordinates": [2.545, 0.12, -2.49, 1.42, 0.66, 0.24],
+							"uvNorth": [16, 50, 24, 58],
+							"uvEast": [16, 50, 24, 58],
+							"uvSouth": [16, 50, 24, 58],
+							"uvWest": [16, 50, 24, 58],
+							"uvUp": [16, 50, 24, 58],
+							"uvDown": [16, 50, 24, 58]
+						},
+						{
+							"coordinates": [0.765, 0.12, -2.49, 1.42, 0.66, 0.24],
+							"uvNorth": [16, 50, 24, 58],
+							"uvEast": [16, 50, 24, 58],
+							"uvSouth": [16, 50, 24, 58],
+							"uvWest": [16, 50, 24, 58],
+							"uvUp": [16, 50, 24, 58],
+							"uvDown": [16, 50, 24, 58]
+						},
+						{
+							"coordinates": [4.445, -0.55, -0.8, 0.57, 1.1, 1.6],
+							"uvNorth": [24, 50, 32, 58],
+							"uvEast": [24, 50, 32, 58],
+							"uvSouth": [24, 50, 32, 58],
+							"uvWest": [24, 50, 32, 58],
+							"uvUp": [24, 50, 32, 58],
+							"uvDown": [24, 50, 32, 58]
+						},
+						{
+							"coordinates": [0.365, -0.05, -2.27, 4, 1.05, 0.4],
+							"uvNorth": [24, 50, 32, 58],
+							"uvEast": [24, 50, 32, 58],
+							"uvSouth": [24, 50, 32, 58],
+							"uvWest": [24, 50, 32, 58],
+							"uvUp": [24, 50, 32, 58],
+							"uvDown": [24, 50, 32, 58]
+						},
+						{
+							"coordinates": [4.725, 0.25, -0.1, 0.14, 1.8, 0.17],
+							"uvNorth": [24, 50, 32, 58],
+							"uvEast": [24, 50, 32, 58],
+							"uvSouth": [24, 50, 32, 58],
+							"uvWest": [24, 50, 32, 58],
+							"uvUp": [24, 50, 32, 58],
+							"uvDown": [24, 50, 32, 58]
+						},
+						{
+							"coordinates": [-0.335, 0.25, -2.3, 5.4, 0.35, 4.1],
+							"uvNorth": [0, 50, 16, 64],
+							"uvEast": [0, 50, 16, 64],
+							"uvSouth": [0, 50, 16, 64],
+							"uvWest": [0, 50, 16, 64],
+							"uvUp": [0, 50, 16, 64],
+							"uvDown": [0, 50, 16, 64]
+						},
+						{
+							"coordinates": [-0.035, 0.6, -1.7, 4.8, 1.65, 3.2],
+							"uvNorth": [0, 50, 16, 64],
+							"uvEast": [0, 50, 16, 64],
+							"uvSouth": [0, 50, 16, 64],
+							"uvWest": [0, 50, 16, 64],
+							"uvUp": [0, 50, 16, 64],
+							"uvDown": [0, 50, 16, 64]
+						}
+					]
+				}
+			]
+		},
+		{
+			"part": "bill",
+			"id": "bill",
+			"invertAxis": "xy",
+			"translate": [0, -9, 4],
+			"texture": "battle-chickens:textures/entity/chicken/sniper.png",
+			"textureSize": [128, 64],
+			"boxes": [
+				{"coordinates": [-2, 11, -8, 4, 2, 2], "textureOffset": [78, 0]}
+			]
+		},
+		{
+			"part": "chin",
+			"id": "chin",
+			"invertAxis": "xy",
+			"translate": [0, -9, 4],
+			"texture": "battle-chickens:textures/entity/chicken/sniper.png",
+			"textureSize": [128, 64],
+			"boxes": [
+				{"coordinates": [-1, 9, -7, 2, 2, 2], "textureOffset": [78, 4]}
+			]
+		},
+		{
+			"part": "body",
+			"id": "body",
+			"invertAxis": "xy",
+			"translate": [0, -8, 0],
+			"rotate": [-90, 0, 0],
+			"texture": "battle-chickens:textures/entity/chicken/sniper.png",
+			"textureSize": [128, 64],
+			"boxes": [
+				{"coordinates": [-3, 4, -3, 6, 8, 6], "textureOffset": [64, 9]}
+			],
+			"submodels": [
+				{
+					"id": "SniperEquipment",
+					"invertAxis": "xy",
+					"translate": [0, 8, 0],
+					"rotate": [90, 0, 0],
+					"submodels": [
+						{
+							"id": "SniperGear",
+							"invertAxis": "xy",
+							"translate": [0, -8, 0],
+							"boxes": [
+								{
+									"coordinates": [-2.8, 7.8, -3.67, 5.6, 0.7, 0.19],
+									"uvNorth": [24, 50, 32, 58],
+									"uvEast": [24, 50, 32, 58],
+									"uvSouth": [24, 50, 32, 58],
+									"uvWest": [24, 50, 32, 58],
+									"uvUp": [24, 50, 32, 58],
+									"uvDown": [24, 50, 32, 58]
+								},
+								{
+									"coordinates": [-3.2, 5.05, -3.86, 6.4, 0.45, 0.41],
+									"uvNorth": [24, 50, 32, 58],
+									"uvEast": [24, 50, 32, 58],
+									"uvSouth": [24, 50, 32, 58],
+									"uvWest": [24, 50, 32, 58],
+									"uvUp": [24, 50, 32, 58],
+									"uvDown": [24, 50, 32, 58]
+								},
+								{
+									"coordinates": [-2.65, 5.6, -4.12, 1.3, 1.75, 0.5],
+									"uvNorth": [24, 50, 32, 58],
+									"uvEast": [24, 50, 32, 58],
+									"uvSouth": [24, 50, 32, 58],
+									"uvWest": [24, 50, 32, 58],
+									"uvUp": [24, 50, 32, 58],
+									"uvDown": [24, 50, 32, 58]
+								},
+								{
+									"coordinates": [-0.65, 5.6, -4.12, 1.3, 1.75, 0.5],
+									"uvNorth": [24, 50, 32, 58],
+									"uvEast": [24, 50, 32, 58],
+									"uvSouth": [24, 50, 32, 58],
+									"uvWest": [24, 50, 32, 58],
+									"uvUp": [24, 50, 32, 58],
+									"uvDown": [24, 50, 32, 58]
+								},
+								{
+									"coordinates": [1.35, 5.6, -4.12, 1.3, 1.75, 0.5],
+									"uvNorth": [24, 50, 32, 58],
+									"uvEast": [24, 50, 32, 58],
+									"uvSouth": [24, 50, 32, 58],
+									"uvWest": [24, 50, 32, 58],
+									"uvUp": [24, 50, 32, 58],
+									"uvDown": [24, 50, 32, 58]
+								},
+								{
+									"coordinates": [-2.25, 6.15, -4.2, 0.3, 0.9, 0.19],
+									"uvNorth": [32, 50, 40, 58],
+									"uvEast": [32, 50, 40, 58],
+									"uvSouth": [32, 50, 40, 58],
+									"uvWest": [32, 50, 40, 58],
+									"uvUp": [32, 50, 40, 58],
+									"uvDown": [32, 50, 40, 58]
+								},
+								{
+									"coordinates": [-0.15, 6.15, -4.2, 0.3, 0.9, 0.19],
+									"uvNorth": [32, 50, 40, 58],
+									"uvEast": [32, 50, 40, 58],
+									"uvSouth": [32, 50, 40, 58],
+									"uvWest": [32, 50, 40, 58],
+									"uvUp": [32, 50, 40, 58],
+									"uvDown": [32, 50, 40, 58]
+								},
+								{
+									"coordinates": [1.95, 6.15, -4.2, 0.3, 0.9, 0.19],
+									"uvNorth": [32, 50, 40, 58],
+									"uvEast": [32, 50, 40, 58],
+									"uvSouth": [32, 50, 40, 58],
+									"uvWest": [32, 50, 40, 58],
+									"uvUp": [32, 50, 40, 58],
+									"uvDown": [32, 50, 40, 58]
+								},
+								{
+									"coordinates": [-2.5, 5.6, -4.05, 5, 4.8, 1.55],
+									"uvNorth": [0, 50, 16, 64],
+									"uvEast": [0, 50, 16, 64],
+									"uvSouth": [0, 50, 16, 64],
+									"uvWest": [0, 50, 16, 64],
+									"uvUp": [0, 50, 16, 64],
+									"uvDown": [0, 50, 16, 64]
+								},
+								{
+									"coordinates": [-3.8, 7.25, -2.45, 0.65, 1.9, 0.8],
+									"uvNorth": [24, 50, 32, 58],
+									"uvEast": [24, 50, 32, 58],
+									"uvSouth": [24, 50, 32, 58],
+									"uvWest": [24, 50, 32, 58],
+									"uvUp": [24, 50, 32, 58],
+									"uvDown": [24, 50, 32, 58]
+								},
+								{
+									"coordinates": [-3.6, 9.1, -2.12, 0.12, 1.7, 0.12],
+									"uvNorth": [24, 50, 32, 58],
+									"uvEast": [24, 50, 32, 58],
+									"uvSouth": [24, 50, 32, 58],
+									"uvWest": [24, 50, 32, 58],
+									"uvUp": [24, 50, 32, 58],
+									"uvDown": [24, 50, 32, 58]
+								},
+								{
+									"coordinates": [2.25, 8.8, -3.91, 0.7, 0.75, 0.21],
+									"uvNorth": [40, 50, 48, 58],
+									"uvEast": [40, 50, 48, 58],
+									"uvSouth": [40, 50, 48, 58],
+									"uvWest": [40, 50, 48, 58],
+									"uvUp": [40, 50, 48, 58],
+									"uvDown": [40, 50, 48, 58]
+								}
+							]
+						}
+					]
+				}
+			],
+			"animations": [
+				{
+					"this.rx": 0
+				}
+			]
+		},
+		{
+			"part": "left_wing",
+			"id": "left_wing",
+			"invertAxis": "xy",
+			"translate": [4, -11, 0],
+			"texture": "battle-chickens:textures/entity/chicken/sniper.png",
+			"textureSize": [128, 64],
+			"boxes": [
+				{"coordinates": [-4, 7, -3, 1, 4, 6], "textureOffset": [88, 13]}
+			],
+			"submodels": [
+				{
+					"id": "Sniper",
+					"invertAxis": "xy",
+					"translate": [-3.5, -1, -10],
+					"rotate": [0, 90, 0],
+					"submodels": [
+						{
+							"id": "Barrel",
+							"invertAxis": "xy",
+							"translate": [0, 0, 0],
+							"boxes": [
+								{
+									"coordinates": [-8.1, 9.4804, -0.1944, 12, 0.34, 0.34],
+									"uvNorth": [0, 14, 60, 16],
+									"uvEast": [44, 0, 46, 2],
+									"uvSouth": [0, 12, 60, 14],
+									"uvWest": [29, 43, 31, 45],
+									"uvUp": [0, 16, 60, 18],
+									"uvDown": [0, 20, 60, 18]
+								}
+							]
+						},
+						{
+							"id": "Stock",
+							"invertAxis": "xy",
+							"translate": [0, 0, 0],
+							"boxes": [
+								{
+									"coordinates": [-11.9, 8.0856, -0.5, 0.4, 1.74, 1],
+									"uvNorth": [32, 23, 34, 32],
+									"uvEast": [5, 20, 10, 29],
+									"uvSouth": [6, 32, 8, 41],
+									"uvWest": [0, 20, 5, 29],
+									"uvUp": [22, 37, 24, 42],
+									"uvDown": [8, 44, 10, 39]
+								},
+								{
+									"coordinates": [-11.0256, 7.6116, -0.2, 0.4, 1.34, 0.36],
+									"uvNorth": [34, 34, 36, 41],
+									"uvEast": [10, 36, 12, 43],
+									"uvSouth": [24, 34, 26, 41],
+									"uvWest": [32, 34, 34, 41],
+									"uvUp": [44, 2, 46, 4],
+									"uvDown": [44, 6, 46, 4],
+									"sizeAdd": 0.004
+								},
+								{
+									"coordinates": [-9.7344, 7.8852, -0.2, 0.4, 1.94, 0.36],
+									"uvNorth": [2, 32, 4, 42],
+									"uvEast": [4, 32, 6, 42],
+									"uvSouth": [8, 29, 10, 39],
+									"uvWest": [0, 32, 2, 42],
+									"uvUp": [6, 44, 8, 46],
+									"uvDown": [44, 8, 46, 6]
+								},
+								{
+									"coordinates": [-10.0356, 8.9216, -0.39, 0.62, 1.54, 0.74],
+									"uvNorth": [29, 31, 32, 39],
+									"uvEast": [14, 28, 18, 36],
+									"uvSouth": [26, 31, 29, 39],
+									"uvWest": [10, 28, 14, 36],
+									"uvUp": [26, 39, 29, 43],
+									"uvDown": [29, 43, 32, 39]
+								}
+							]
+						}
+					],
+					"boxes": [
+						{
+							"coordinates": [-11.5, 9.096, -0.3244, 8.8, 0.6, 0.6],
+							"uvNorth": [0, 3, 44, 6],
+							"uvEast": [32, 41, 35, 44],
+							"uvSouth": [0, 0, 44, 3],
+							"uvWest": [18, 40, 21, 43],
+							"uvUp": [0, 6, 44, 9],
+							"uvDown": [0, 12, 44, 9]
+						},
+						{
+							"coordinates": [-7.352, 8.7756, -0.3744, 1.6, 0.56, 0.7],
+							"uvNorth": [18, 31, 26, 34],
+							"uvEast": [38, 38, 42, 41],
+							"uvSouth": [0, 29, 8, 32],
+							"uvWest": [18, 37, 22, 40],
+							"uvUp": [24, 23, 32, 27],
+							"uvDown": [24, 31, 32, 27]
+						},
+						{
+							"coordinates": [-7.24, 8.37, -0.5244, 1.48, 0.48, 1],
+							"uvNorth": [38, 36, 45, 38],
+							"uvEast": [40, 30, 45, 32],
+							"uvSouth": [38, 34, 45, 36],
+							"uvWest": [40, 28, 45, 30],
+							"uvUp": [10, 23, 17, 28],
+							"uvDown": [17, 28, 24, 23]
+						},
+						{
+							"coordinates": [-8.24, 9.44, -0.2544, 0.68, 0.6, 0.46],
+							"uvNorth": [38, 41, 41, 44],
+							"uvEast": [24, 41, 26, 44],
+							"uvSouth": [35, 41, 38, 44],
+							"uvWest": [6, 41, 8, 44],
+							"uvUp": [41, 32, 44, 34],
+							"uvDown": [42, 40, 45, 38],
+							"sizeAdd": 0.004
+						},
+						{
+							"coordinates": [-6.44, 9.44, -0.2544, 0.68, 0.6, 0.46],
+							"uvNorth": [0, 42, 3, 45],
+							"uvEast": [12, 43, 14, 46],
+							"uvSouth": [41, 41, 44, 44],
+							"uvWest": [10, 43, 12, 46],
+							"uvUp": [14, 43, 17, 45],
+							"uvDown": [17, 45, 20, 43],
+							"sizeAdd": 0.004
+						},
+						{
+							"coordinates": [-8.24, 9.65, -0.1044, 2.48, 0.6, 0.16],
+							"uvNorth": [22, 20, 34, 23],
+							"uvEast": [0, 45, 1, 48],
+							"uvSouth": [10, 20, 22, 23],
+							"uvWest": [20, 43, 21, 46],
+							"uvUp": [40, 26, 52, 27],
+							"uvDown": [40, 28, 52, 27]
+						},
+						{
+							"coordinates": [-7.44, 10.16, -0.2944, 0.28, 0.28, 0.54],
+							"uvNorth": [35, 45, 36, 46],
+							"uvEast": [14, 45, 17, 46],
+							"uvSouth": [45, 34, 46, 35],
+							"uvWest": [1, 45, 4, 46],
+							"uvUp": [4, 45, 5, 48],
+							"uvDown": [5, 48, 6, 45]
+						},
+						{
+							"coordinates": [-6.84, 10.16, -0.2944, 0.28, 0.28, 0.54],
+							"uvNorth": [36, 45, 37, 46],
+							"uvEast": [21, 45, 24, 46],
+							"uvSouth": [45, 35, 46, 36],
+							"uvWest": [17, 45, 20, 46],
+							"uvUp": [26, 45, 27, 48],
+							"uvDown": [27, 48, 28, 45]
+						},
+						{
+							"coordinates": [-8.6792, 8.02, -0.2244, 0.4, 1.4, 0.4],
+							"uvNorth": [16, 36, 18, 43],
+							"uvEast": [36, 34, 38, 41],
+							"uvSouth": [12, 36, 14, 43],
+							"uvWest": [14, 36, 16, 43],
+							"uvUp": [8, 44, 10, 46],
+							"uvDown": [44, 10, 46, 8]
+						},
+						{
+							"coordinates": [-8.32, 8.4616, -0.1244, 0.58, 0.11, 0.2],
+							"uvNorth": [33, 44, 36, 45],
+							"uvEast": [45, 31, 46, 32],
+							"uvSouth": [42, 40, 45, 41],
+							"uvWest": [45, 30, 46, 31],
+							"uvUp": [36, 44, 39, 45],
+							"uvDown": [39, 45, 42, 44],
+							"sizeAdd": 0.004
+						},
+						{
+							"coordinates": [-8.0004, 8.7032, -0.1244, 0.62, 0.15, 0.2],
+							"uvNorth": [42, 44, 45, 45],
+							"uvEast": [34, 45, 35, 46],
+							"uvSouth": [44, 41, 47, 42],
+							"uvWest": [33, 45, 34, 46],
+							"uvUp": [44, 42, 47, 43],
+							"uvDown": [44, 44, 47, 43]
+						},
+						{
+							"coordinates": [-8.1416, 8.6364, -0.0748, 0.1, 0.4, 0.1],
+							"uvNorth": [45, 28, 46, 30],
+							"uvEast": [29, 45, 30, 47],
+							"uvSouth": [21, 40, 22, 42],
+							"uvWest": [28, 45, 29, 47],
+							"uvUp": [31, 43, 32, 44],
+							"uvDown": [30, 46, 31, 45]
+						},
+						{
+							"coordinates": [-7.9, 10.2564, -0.2244, 1.8, 0.4, 0.4],
+							"uvNorth": [34, 20, 43, 22],
+							"uvEast": [24, 44, 26, 46],
+							"uvSouth": [32, 32, 41, 34],
+							"uvWest": [44, 10, 46, 12],
+							"uvUp": [34, 22, 43, 24],
+							"uvDown": [34, 26, 43, 24]
+						},
+						{
+							"coordinates": [-8.5, 10.2364, -0.2444, 0.6, 0.44, 0.44],
+							"uvNorth": [43, 22, 46, 24],
+							"uvEast": [44, 32, 46, 34],
+							"uvSouth": [43, 20, 46, 22],
+							"uvWest": [31, 44, 33, 46],
+							"uvUp": [43, 24, 46, 26],
+							"uvDown": [26, 45, 29, 43]
+						},
+						{
+							"coordinates": [-7.4, 10.2364, -0.2444, 0.2, 0.44, 0.44],
+							"uvNorth": [43, 22, 46, 24],
+							"uvEast": [44, 32, 46, 34],
+							"uvSouth": [43, 20, 46, 22],
+							"uvWest": [31, 44, 33, 46],
+							"uvUp": [43, 24, 46, 26],
+							"uvDown": [26, 45, 29, 43]
+						},
+						{
+							"coordinates": [-6.8, 10.2364, -0.2444, 0.2, 0.44, 0.44],
+							"uvNorth": [43, 22, 46, 24],
+							"uvEast": [44, 32, 46, 34],
+							"uvSouth": [43, 20, 46, 22],
+							"uvWest": [31, 44, 33, 46],
+							"uvUp": [43, 24, 46, 26],
+							"uvDown": [26, 45, 29, 43]
+						},
+						{
+							"coordinates": [-6.1, 10.2064, -0.2744, 1.25, 0.5, 0.5],
+							"uvNorth": [18, 34, 24, 37],
+							"uvEast": [21, 42, 24, 45],
+							"uvSouth": [18, 28, 24, 31],
+							"uvWest": [3, 42, 6, 45],
+							"uvUp": [34, 26, 40, 29],
+							"uvDown": [34, 32, 40, 29]
+						}
+					]
+				}
+			]
+		},
+		{
+			"part": "right_wing",
+			"id": "right_wing",
+			"invertAxis": "xy",
+			"translate": [-4, -11, 0],
+			"texture": "battle-chickens:textures/entity/chicken/sniper.png",
+			"textureSize": [128, 64],
+			"boxes": [
+				{"coordinates": [3, 7, -3, 1, 4, 6], "textureOffset": [88, 13]}
+			]
+		},
+		{
+			"part": "left_leg",
+			"id": "left_leg",
+			"invertAxis": "xy",
+			"translate": [1, -5, -1],
+			"texture": "battle-chickens:textures/entity/chicken/sniper.png",
+			"textureSize": [128, 64],
+			"boxes": [
+				{"coordinates": [-3, 0, -2, 3, 5, 3], "textureOffset": [90, 0]}
+			]
+		},
+		{
+			"part": "right_leg",
+			"id": "right_leg",
+			"invertAxis": "xy",
+			"translate": [-2, -5, -1],
+			"texture": "battle-chickens:textures/entity/chicken/sniper.png",
+			"textureSize": [128, 64],
+			"boxes": [
+				{"coordinates": [0, 0, -2, 3, 5, 3], "textureOffset": [90, 0]}
+			]
+		}
+	]
+}

@@ -35,7 +35,8 @@
 
 The Purge is a world-wide 7-day event triggered by using an **Ominous Egg**. Each Minecraft day lasts 24,000 ticks (20 real-time minutes).
 
-- **Escalating Threat**: Rather than fixed daily waves, naturally spawned chickens near players have an increasing chance to convert into armed hostile military units.
+- **Dawn Sieges**: Each morning on Days 1–6, armed chicken squads attack nearby bases. Wave size and health scale linearly with the Purge day and Ominous Egg threat; naturally spawned chickens also become increasingly likely to join the military.
+- **Day 7 Doomsday**: The dawn sieges give way to the Overlord and Sky Overlord, the two final bosses. Player deaths before Day 7 do not end the Purge.
 - **Daily Rations**: At each sunrise, surviving players receive an emergency **Rations Crate** containing food, ammunition, and medical kits (except on Hardcore or Threat IV/V).
 - **Salvage Outposts**: From Day 4 until Day 7, fortified chicken outposts appear in the world. Defeating the Outpost Guard scatters nearby squads and yields rare materials from the outpost cache.
 - **Blueprints & Tech Tree**: Personally defeating a new Purge unit teaches its blueprint and unlocks its associated recipes. Craft at any crafting table; the **Scrap Bench** is a reusable crafting-table block.
@@ -270,8 +271,8 @@ Many items feature custom colored multi-line tooltips (categorized by tag, descr
 | Unit Name | Weapons / Behavior | Spawn Timeline |
 | :--- | :--- | :--- |
 | **Scavenger Chicken** | Light melee; swarms players. | Day 1+ |
-| **Militia Chicken** | Armed melee; increased health. | Day 1+ |
-| **Sergeant Chicken** | Iron sword; inspires nearby units with Strength. | Day 2+ |
+| **Militia Chicken** | Iron sword; armed melee with increased health and damage. | Day 1+ |
+| **Sergeant Chicken** | No held weapon; inspires nearby units with Strength. | Day 2+ |
 | **Grenadier Hen** | 3D bomb backpack; lobs timed Purge Grenades. | Day 2+ |
 | **Sniper Hen** | Sniper Beak rifle; telegraphs shots from up to 96 blocks. | Day 3+ |
 | **RPG Chicken** | Fires 3 Dud Rockets at 8s intervals with audible telegraph. | Day 3+ (Unlimited on Day 7) |
@@ -350,12 +351,40 @@ To launch a development client directly:
 ### Editing Entity Textures
 Entity textures live in `src/main/resources/assets/battle-chickens/textures/entity/` and are packaged with the mod. Each special mob uses its own complete PNG directly; it does not load a vanilla skin underneath or read textures from an external `entity` folder. Replace or edit a PNG at the same path, then launch again with `./gradlew runClient`. Keep the existing dimensions and PNG format so Minecraft's model UV mapping continues to line up.
 
-- `chicken/*.png` are the role-specific chicken skins (64×32), mapped by `ChickenRoleRenderer`.
+- `chicken/*.png` are role-specific chicken skins. Most are 64×32; `grenadier.png` and `medic.png` are 128×128, and `bomber_general.png` is 4096×4096.
 - `armored_tank.png` and `overlord.png` are complete Ravager-model skins (128×128).
 - `purge_drone.png` is a complete Vex-model skin (32×32).
 - `purge_gunship.png` and `sky_overlord.png` are complete Phantom-model skins (64×64).
 - `shield_generator_golem.png` is a complete Iron Golem-model skin (128×128), shared by the Shield Generator and Golem Walker.
 - `enraged_golem.png` is the Sky Overlord's separate, red-toned Iron Golem-model skin (128×128).
 - `veteran_rooster.png` is a complete Villager-model skin (64×64).
+
+#### Chicken role texture map
+
+These are the PNGs selected for the mod's chicken roles. The path prefix for every entry is `src/main/resources/assets/battle-chickens/textures/entity/chicken/`.
+
+| Chicken / role | PNG file |
+| :--- | :--- |
+| Warrior Chicken | `warrior.png` |
+| Scavenger Chicken | `scavenger.png` |
+| Militia Chicken | `militia.png` |
+| Sergeant Chicken | `sergeant.png` |
+| Grenadier Hen | `grenadier.png` |
+| Sniper Hen | `sniper.png` |
+| RPG Chicken | `rpg.png` |
+| Medic Hen | `medic.png` |
+| Riot Chicken | `riot.png` |
+| Gunship Gunner | `gunner.png` |
+| Overlord Rooster | `overlord.png` |
+| Overlord Bombardier | `bombardier.png` |
+| Summoner General | `summoner.png` |
+| Tank General | `tank.png` |
+| Bomber General | `bomber_general.png` |
+| Buffer General | `buffer.png` |
+| Summoned Chicken | `summoned.png` |
+| Outpost Guard | `guard.png` |
+| Giga Chicken | `giga.png` |
+
+Bomber General has its own renderer and uses `bomber_general.png`; it does not use `bomber.png`. The other role mappings are selected by `ChickenRoleRenderer`.
 
 The custom entity renderers keep the vanilla models and animations, so the existing UV layouts apply to these independent, editable skins.

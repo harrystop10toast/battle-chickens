@@ -22,10 +22,7 @@ public final class ChickenRoleRenderer extends ChickenRenderer {
 	private static final Identifier OVERLORD = BattleChickens.id("textures/entity/chicken/overlord.png");
 	private static final Identifier GUNNER = BattleChickens.id("textures/entity/chicken/gunner.png");
 	private static final Identifier SUMMONER = BattleChickens.id("textures/entity/chicken/summoner.png");
-	private static final Identifier TANK = BattleChickens.id("textures/entity/chicken/tank.png");
 	private static final Identifier BOMBER = BattleChickens.id("textures/entity/chicken/bomber.png");
-	private static final Identifier BUFFER = BattleChickens.id("textures/entity/chicken/buffer.png");
-	private static final Identifier OVERLORD_RPG = BattleChickens.id("textures/entity/chicken/overlord_rpg.png");
 	private static final Identifier BOMBARDIER = BattleChickens.id("textures/entity/chicken/bombardier.png");
 	private static final Identifier GIGA = BattleChickens.id("textures/entity/chicken/giga.png");
 	private static final Identifier GUARD = BattleChickens.id("textures/entity/chicken/guard.png");
@@ -67,11 +64,13 @@ public final class ChickenRoleRenderer extends ChickenRenderer {
 				|| name.startsWith("Nemesis Chicken:")) {
 			return OVERLORD;
 		}
+		if (name.equals("Scavenger Chicken")) {
+			return SCAVENGER;
+		}
 		if (name.equals("Gunship Gunner")) {
 			return GUNNER;
 		}
-		if (name.equals("RPG Chicken") || name.equals("Overlord RPG Chicken")
-				|| name.equals("Bomber General")) {
+		if (name.equals("RPG Chicken") || name.equals("Bomber General")) {
 			return RPG;
 		}
 		if (name.equals("Grenadier Hen") || name.equals("Grenadier General")) {
@@ -90,7 +89,7 @@ public final class ChickenRoleRenderer extends ChickenRenderer {
 			return SERGEANT;
 		}
 		if (name.equals("Warrior Chicken") || name.equals("Militia Chicken")
-				|| name.equals("Scavenger Chicken") || name.equals("Summoned Chicken")) {
+				|| name.equals("Summoned Chicken")) {
 			return MILITIA;
 		}
 		return null;
@@ -99,7 +98,6 @@ public final class ChickenRoleRenderer extends ChickenRenderer {
 	private static Identifier textureForRole(String role) {
 		return switch (role) {
 			case "rpg_chicken" -> RPG;
-			case "overlord_rpg_chicken" -> OVERLORD_RPG;
 			case "grenadier_chicken" -> GRENADIER;
 			case "sniper_chicken" -> SNIPER;
 			case "medic_chicken" -> MEDIC;
@@ -111,9 +109,7 @@ public final class ChickenRoleRenderer extends ChickenRenderer {
 			case "overlord_rooster" -> OVERLORD;
 			case "overlord_bombardier" -> BOMBARDIER;
 			case "summoner_general" -> SUMMONER;
-			case "tank_general" -> TANK;
 			case "bomber_general" -> BOMBER;
-			case "buffer_general" -> BUFFER;
 			case "summoned_chicken" -> SUMMONED;
 			case "outpost_guard" -> GUARD;
 			case "giga_chicken" -> GIGA;
@@ -121,7 +117,7 @@ public final class ChickenRoleRenderer extends ChickenRenderer {
 		};
 	}
 
-	private static final class RoleRenderState extends ChickenRenderState {
+	static final class RoleRenderState extends ChickenRenderState {
 		private Identifier roleTexture;
 	}
 }

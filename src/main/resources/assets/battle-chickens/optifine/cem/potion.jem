@@ -1,0 +1,83 @@
+{
+	"credit": "Made with Blockbench",
+	"textureSize": [256, 256],
+	"texture": "battle-chickens:textures/entity/potion.png",
+	"models": [
+		{
+			"part": "body",
+			"id": "potion",
+			"invertAxis": "xy",
+			"translate": [0, 0, 0],
+			"submodels": [
+				{
+					"id": "cork_lid_lower",
+					"invertAxis": "xy",
+					"translate": [0, 18.95, 0],
+					"rotate": [0, 0, 180],
+					"boxes": [
+						{
+							"coordinates": [-3, -2.5, -3, 6, 5, 6],
+							"uvNorth": [49, 199, 37, 209],
+							"uvEast": [61, 199, 49, 209],
+							"uvSouth": [73, 199, 61, 209],
+							"uvWest": [37, 199, 25, 209],
+							"uvUp": [61, 221, 49, 209],
+							"uvDown": [49, 209, 37, 221]
+						}
+					]
+				},
+				{
+					"id": "cork_lid_upper",
+					"invertAxis": "xy",
+					"translate": [0, 20.2, 0],
+					"rotate": [0, 0, 180],
+					"boxes": [
+						{
+							"coordinates": [-3, -1.25, -3, 6, 2.5, 6],
+							"sizeAdd": 0.01,
+							"uvNorth": [49, 204, 37, 209],
+							"uvEast": [61, 204, 49, 209],
+							"uvSouth": [73, 204, 61, 209],
+							"uvWest": [37, 204, 25, 209],
+							"uvUp": [61, 221, 49, 209],
+							"uvDown": [49, 209, 37, 221]
+						}
+					]
+				},
+				{
+					"id": "glass_jar",
+					"invertAxis": "xy",
+					"translate": [0, 0.5, 0],
+					"boxes": [
+						{
+							"coordinates": [-7, -0.5, -7, 14, 19, 14],
+							"uvNorth": [0, 256, 28, 218],
+							"uvEast": [0, 256, 28, 218],
+							"uvSouth": [0, 256, 28, 218],
+							"uvWest": [0, 256, 28, 218],
+							"uvUp": [58, 228, 30, 256],
+							"uvDown": [28, 167, 0, 195]
+						}
+					]
+				},
+				{
+					"id": "liquid",
+					"invertAxis": "xy",
+					"translate": [0, 6.95, 0],
+					"rotate": [-180, 0, 180],
+					"boxes": [
+						{
+							"coordinates": [-5.5, -5.5, -5.5, 11, 11, 11],
+							"uvNorth": [150, 228, 172, 206],
+							"uvEast": [128, 228, 150, 206],
+							"uvSouth": [106, 228, 128, 206],
+							"uvWest": [84, 228, 106, 206],
+							"uvUp": [128, 228, 106, 250],
+							"uvDown": [150, 250, 128, 228]
+						}
+					]
+				}
+			]
+		}
+	]
+}

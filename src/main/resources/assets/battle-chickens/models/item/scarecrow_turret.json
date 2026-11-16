@@ -1,3 +1,6 @@
 {
-  "parent": "minecraft:block/carved_pumpkin"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:block/hay_block_side"
+  }
 }

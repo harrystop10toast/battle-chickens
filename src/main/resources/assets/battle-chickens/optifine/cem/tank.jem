@@ -1,0 +1,183 @@
+{
+	"credit": "Made with Blockbench",
+	"textureSize": [256, 256],
+	"models": [
+		{
+			"part": "head",
+			"id": "head",
+			"invertAxis": "xy",
+			"translate": [0, -9, 4],
+			"texture": "battle-chickens:textures/entity/chicken/tank.png",
+			"textureSize": [256, 256],
+			"boxes": [
+				{"coordinates": [-2, 9, -6, 4, 6, 3], "textureOffset": [128, 0]}
+			],
+			"submodels": [
+				{
+					"id": "helmet_armor",
+					"invertAxis": "xy",
+					"translate": [0, 9, -4],
+					"boxes": [
+						{"coordinates": [-2.6, 5.2, -2.2, 5.2, 2, 3.4], "textureOffset": [0, 0]},
+						{"coordinates": [-2, 6.6, -1.5, 4, 0.8, 2.5], "textureOffset": [64, 0]},
+						{"coordinates": [-0.8, 6.7, -1.2, 1.6, 1, 2.1], "textureOffset": [0, 64]},
+						{"coordinates": [-2.7, 1, -1.5, 0.6, 3, 2.3], "textureOffset": [64, 64]},
+						{"coordinates": [2.1, 1, -1.5, 0.6, 3, 2.3], "textureOffset": [64, 64]},
+						{"coordinates": [-2.1, 4, -1, 0.15, 1, 1], "textureOffset": [0, 64]},
+						{"coordinates": [1.95, 4, -1, 0.15, 1, 1], "textureOffset": [0, 64]},
+						{"coordinates": [-1.3, 2, -5.2, 2.6, 1.2, 1.3], "textureOffset": [64, 0]},
+						{"coordinates": [-1.7, 6, -2.55, 1.3, 0.45, 0.25], "textureOffset": [0, 64]},
+						{"coordinates": [0.4, 6, -2.55, 1.3, 0.45, 0.25], "textureOffset": [0, 64]},
+						{"coordinates": [-0.9, 1.2, -4.9, 1.8, 0.8, 1.1], "textureOffset": [64, 0]}
+					]
+				}
+			]
+		},
+		{
+			"part": "bill",
+			"id": "bill",
+			"invertAxis": "xy",
+			"translate": [0, -9, 4],
+			"texture": "battle-chickens:textures/entity/chicken/tank.png",
+			"textureSize": [256, 256],
+			"boxes": [
+				{"coordinates": [-2, 11, -8, 4, 2, 2], "textureOffset": [142, 0]}
+			]
+		},
+		{
+			"part": "chin",
+			"id": "chin",
+			"invertAxis": "xy",
+			"translate": [0, -9, 4],
+			"texture": "battle-chickens:textures/entity/chicken/tank.png",
+			"textureSize": [256, 256],
+			"boxes": [
+				{"coordinates": [-1, 9, -7, 2, 2, 2], "textureOffset": [142, 4]}
+			]
+		},
+		{
+			"part": "body",
+			"id": "body",
+			"invertAxis": "xy",
+			"translate": [0, -8, 0],
+			"rotate": [-90, 0, 0],
+			"texture": "battle-chickens:textures/entity/chicken/tank.png",
+			"textureSize": [256, 256],
+			"boxes": [
+				{"coordinates": [-3, 4, -3, 6, 8, 6], "textureOffset": [128, 9]}
+			],
+			"submodels": [
+				{
+					"id": "body_armor",
+					"invertAxis": "xy",
+					"translate": [0, 8, 0],
+					"boxes": [
+						{"coordinates": [-2.8, 4.1, -2.8, 5.6, 1, 5.6], "textureOffset": [0, 0]},
+						{"coordinates": [-2, 4.9, -2, 4, 0.5, 3], "textureOffset": [62, -1]},
+						{"coordinates": [-2.8, -4.7, -2.5, 5.6, 0.8, 5], "textureOffset": [64, 64]},
+						{"coordinates": [-1.9, -3, 3, 3.8, 4, 1], "textureOffset": [64, 0]},
+						{"coordinates": [-1.2, -2, 3.2, 2.4, 2, 1.1], "textureOffset": [0, 0]},
+						{"coordinates": [-0.5, -1.5, 4.1, 1, 1, 0.5], "textureOffset": [0, 64]}
+					]
+				}
+			],
+			"animations": [
+				{
+					"this.rx": 0
+				}
+			]
+		},
+		{
+			"part": "left_wing",
+			"id": "left_wing",
+			"invertAxis": "xy",
+			"translate": [4, -11, 0],
+			"texture": "battle-chickens:textures/entity/chicken/tank.png",
+			"textureSize": [256, 256],
+			"boxes": [
+				{"coordinates": [-4, 7, -3, 1, 4, 6], "textureOffset": [152, 13]}
+			],
+			"submodels": [
+				{
+					"id": "left_wing_armor",
+					"invertAxis": "xy",
+					"translate": [-4, 11, 0],
+					"boxes": [
+						{"coordinates": [-1, -4.1, -3.1, 1, 4.2, 6.2], "textureOffset": [0, 0]},
+						{"coordinates": [-1, 0.1, -1, 1, 0.6, 2], "textureOffset": [64, 0]},
+						{"coordinates": [-1, -3, -3.9, 1, 2, 1], "textureOffset": [0, 64]}
+					]
+				}
+			]
+		},
+		{
+			"part": "right_wing",
+			"id": "right_wing",
+			"invertAxis": "xy",
+			"translate": [-4, -11, 0],
+			"texture": "battle-chickens:textures/entity/chicken/tank.png",
+			"textureSize": [256, 256],
+			"boxes": [
+				{"coordinates": [3, 7, -3, 1, 4, 6], "textureOffset": [152, 13]}
+			],
+			"submodels": [
+				{
+					"id": "right_wing_armor",
+					"invertAxis": "xy",
+					"translate": [4, 11, 0],
+					"boxes": [
+						{"coordinates": [0, -4.1, -3.1, 1, 4.2, 6.2], "textureOffset": [0, 0]},
+						{"coordinates": [0, 0.1, -1, 1, 0.6, 2], "textureOffset": [64, 0]},
+						{"coordinates": [0, -3, -3.9, 1, 2, 1], "textureOffset": [0, 64]}
+					]
+				}
+			]
+		},
+		{
+			"part": "left_leg",
+			"id": "left_leg",
+			"invertAxis": "xy",
+			"translate": [1, -5, -1],
+			"texture": "battle-chickens:textures/entity/chicken/tank.png",
+			"textureSize": [256, 256],
+			"boxes": [
+				{"coordinates": [-3, 0, -2, 3, 5, 3], "textureOffset": [154, 0]}
+			],
+			"submodels": [
+				{
+					"id": "left_leg_armor",
+					"invertAxis": "xy",
+					"translate": [-1, 5, 3.6],
+					"boxes": [
+						{"coordinates": [-1.7, -4, -3.5, 2.4, 3, 0.4], "textureOffset": [0, 0]},
+						{"coordinates": [-1.5, -0.9, -3.6, 2, 0.9, 0.5], "textureOffset": [64, 0]},
+						{"coordinates": [-1.8, -5, -3.6, 2.6, 1, 0.5], "textureOffset": [64, 64]}
+					]
+				}
+			]
+		},
+		{
+			"part": "right_leg",
+			"id": "right_leg",
+			"invertAxis": "xy",
+			"translate": [-2, -5, -1],
+			"texture": "battle-chickens:textures/entity/chicken/tank.png",
+			"textureSize": [256, 256],
+			"boxes": [
+				{"coordinates": [0, 0, -2, 3, 5, 3], "textureOffset": [154, 0]}
+			],
+			"submodels": [
+				{
+					"id": "right_leg_armor",
+					"invertAxis": "xy",
+					"translate": [2, 5, 3.6],
+					"boxes": [
+						{"coordinates": [-1.7, -4, -3.5, 2.4, 3, 0.4], "textureOffset": [0, 0]},
+						{"coordinates": [-1.5, -0.9, -3.6, 2, 0.9, 0.5], "textureOffset": [64, 0]},
+						{"coordinates": [-1.8, -5, -3.6, 2.6, 1, 0.5], "textureOffset": [64, 64]}
+					]
+				}
+			]
+		}
+	]
+}

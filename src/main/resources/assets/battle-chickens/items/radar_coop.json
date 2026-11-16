@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "battle-chickens:block/radar_coop"
+    "model": "battle-chickens:item/radar_coop"
   }
 }

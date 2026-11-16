@@ -8,6 +8,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.item.ItemStack;
@@ -25,6 +28,36 @@ public final class PurgeChicken extends Chicken {
 		ItemStack weapon = weapon(role);
 		if (!weapon.isEmpty()) {
 			setItemSlot(EquipmentSlot.MAINHAND, weapon);
+		}
+		if (role.equals("riot_chicken")) {
+			var maxHealth = getAttribute(Attributes.MAX_HEALTH);
+			if (maxHealth != null) {
+				maxHealth.setBaseValue(maxHealth.getBaseValue() * 2);
+				setHealth((float) maxHealth.getBaseValue());
+			}
+			var movementSpeed = getAttribute(Attributes.MOVEMENT_SPEED);
+			if (movementSpeed != null) {
+				movementSpeed.setBaseValue(movementSpeed.getBaseValue() * 0.8);
+			}
+			var knockbackResistance = getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+			if (knockbackResistance != null) {
+				knockbackResistance.setBaseValue(0.6);
+			}
+			if (!level.isClientSide()) {
+				addEffect(new MobEffectInstance(MobEffects.RESISTANCE, -1, 1, true, false));
+			}
+		}
+	}
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (role.equals("riot_chicken") && isAlive() && !level().isClientSide()) {
+			MobEffectInstance resistance = getEffect(MobEffects.RESISTANCE);
+			if (resistance == null || resistance.getAmplifier() != 1
+					|| resistance.getDuration() != -1) {
+				addEffect(new MobEffectInstance(MobEffects.RESISTANCE, -1, 1, true, false));
+			}
 		}
 	}
 
@@ -65,10 +98,11 @@ public final class PurgeChicken extends Chicken {
 			case "riot_chicken" -> "Riot Chicken";
 			case "sergeant_chicken" -> "Sergeant Chicken";
 			case "militia_chicken" -> "Militia Chicken";
+			case "ravager_assault_chicken" -> "Ravager Assault Chicken";
 			case "scavenger_chicken" -> "Scavenger Chicken";
 			case "gunship_gunner" -> "Gunship Gunner";
 			case "overlord_rooster" -> "Overlord Rooster";
-			case "overlord_rpg_chicken" -> "Overlord RPG Chicken";
+			case "overlord_chicken" -> "Overlord Chicken";
 			case "summoner_general" -> "Summoner General";
 			case "tank_general" -> "Tank General";
 			case "bomber_general" -> "Bomber General";
@@ -83,13 +117,14 @@ public final class PurgeChicken extends Chicken {
 
 	private static ItemStack weapon(String role) {
 		return switch (role) {
-			case "rpg_chicken", "overlord_rpg_chicken", "overlord_bombardier" ->
+			case "rpg_chicken", "overlord_bombardier" ->
 					new ItemStack(Items.CROSSBOW);
 			case "grenadier_chicken", "bomber_general" -> new ItemStack(Items.FIRE_CHARGE);
 			case "sniper_chicken" -> new ItemStack(Items.BOW);
 			case "medic_chicken" -> new ItemStack(Items.SPLASH_POTION);
-			case "riot_chicken", "tank_general" -> new ItemStack(Items.IRON_AXE);
-			case "sergeant_chicken", "militia_chicken", "scavenger_chicken",
+			case "riot_chicken" -> new ItemStack(Items.CROSSBOW);
+			case "tank_general" -> new ItemStack(Items.IRON_AXE);
+			case "militia_chicken", "ravager_assault_chicken", "scavenger_chicken",
 					"gunship_gunner", "overlord_rooster", "summoner_general",
 					"buffer_general", "outpost_guard" -> new ItemStack(Items.IRON_SWORD);
 			default -> ItemStack.EMPTY;
