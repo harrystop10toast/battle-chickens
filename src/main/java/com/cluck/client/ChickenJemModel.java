@@ -17,6 +17,7 @@ import java.util.Map;
 import net.minecraft.client.model.animal.chicken.AdultChickenModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.monster.phantom.PhantomModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 
@@ -101,6 +102,73 @@ final class ChickenJemModel {
 		return createPart(model, textureSize, !id.equals(partName));
 	}
 
+	PhantomModel createPhantomModel() {
+		ModelPart vanillaRoot = PhantomModel.createBodyLayer().bakeRoot();
+		ModelPart vanillaBody = vanillaRoot.getChild("body");
+		Map<String, Map<String, ModelPart>> attachments = new LinkedHashMap<>();
+		for (String bone : List.of("body", "head", "left_wing_base", "left_wing_tip",
+				"right_wing_base", "right_wing_tip", "tail_base", "tail_tip")) {
+			attachments.put(bone, new LinkedHashMap<>());
+		}
+
+		for (JsonElement element : document.getAsJsonArray("models")) {
+			JsonObject model = element.getAsJsonObject();
+			String partName = model.get("part").getAsString();
+			String bone = phantomBone(partName);
+			String id = model.get("id").getAsString();
+			Map<String, ModelPart> children = attachments.get(bone);
+			if (children.putIfAbsent(id,
+					createPart(model, textureSize, !id.equals(partName))) != null) {
+				throw new IllegalStateException(
+						"Duplicate model part '" + id + "' in " + resource);
+			}
+		}
+
+		ModelPart vanillaTailBase = vanillaBody.getChild("tail_base");
+		Map<String, ModelPart> tailBaseChildren = new LinkedHashMap<>(attachments.get("tail_base"));
+		tailBaseChildren.put("tail_tip", part(List.of(), attachments.get("tail_tip"),
+				vanillaTailBase.getChild("tail_tip").getInitialPose()));
+		ModelPart tailBase = part(List.of(), tailBaseChildren, vanillaTailBase.getInitialPose());
+
+		ModelPart vanillaLeftWing = vanillaBody.getChild("left_wing_base");
+		Map<String, ModelPart> leftWingChildren = new LinkedHashMap<>(
+				attachments.get("left_wing_base"));
+		leftWingChildren.put("left_wing_tip", part(List.of(), attachments.get("left_wing_tip"),
+				vanillaLeftWing.getChild("left_wing_tip").getInitialPose()));
+		ModelPart leftWing = part(List.of(), leftWingChildren, vanillaLeftWing.getInitialPose());
+
+		ModelPart vanillaRightWing = vanillaBody.getChild("right_wing_base");
+		Map<String, ModelPart> rightWingChildren = new LinkedHashMap<>(
+				attachments.get("right_wing_base"));
+		rightWingChildren.put("right_wing_tip", part(List.of(), attachments.get("right_wing_tip"),
+				vanillaRightWing.getChild("right_wing_tip").getInitialPose()));
+		ModelPart rightWing = part(List.of(), rightWingChildren, vanillaRightWing.getInitialPose());
+
+		Map<String, ModelPart> bodyChildren = new LinkedHashMap<>(attachments.get("body"));
+		bodyChildren.put("head", part(List.of(), attachments.get("head"),
+				vanillaBody.getChild("head").getInitialPose()));
+		bodyChildren.put("tail_base", tailBase);
+		bodyChildren.put("left_wing_base", leftWing);
+		bodyChildren.put("right_wing_base", rightWing);
+		ModelPart body = part(List.of(), bodyChildren, vanillaBody.getInitialPose());
+		return new PhantomModel(part(List.of(), Map.of("body", body), PartPose.ZERO));
+	}
+
+	private String phantomBone(String partName) {
+		return switch (partName) {
+			case "body", "saddle" -> "body";
+			case "head" -> "head";
+			case "left_wing" -> "left_wing_base";
+			case "left_wing_tip" -> "left_wing_tip";
+			case "right_wing" -> "right_wing_base";
+			case "right_wing_tip" -> "right_wing_tip";
+			case "tail" -> "tail_base";
+			case "tail2" -> "tail_tip";
+			default -> throw new IllegalStateException(
+					"Unknown phantom model part '" + partName + "' in " + resource);
+		};
+	}
+
 	private static String attachmentBone(String partName) {
 		return switch (partName) {
 			case "bill", "chin" -> "head";
@@ -170,16 +238,37 @@ final class ChickenJemModel {
 			ModelPart.Polygon polygon = cube.polygons[index];
 			Direction face = Direction.getApproximateNearest(
 					polygon.normal().x(), polygon.normal().y(), polygon.normal().z());
-			String key = "uv" + capitalize(sourceFace(face, model).getName());
+			Direction sourceFace = sourceFace(face, model);
+			String key = "uv" + capitalize(sourceFace.getName());
 			if (!box.has(key)) {
 				continue;
 			}
 			JsonArray uv = box.getAsJsonArray(key);
+			float u0 = uv.get(0).getAsFloat();
+			float v0 = uv.get(1).getAsFloat();
+			float u1 = uv.get(2).getAsFloat();
+			float v1 = uv.get(3).getAsFloat();
+			if (inverts(model, uvAxis(sourceFace, true))) {
+				float swap = u0;
+				u0 = u1;
+				u1 = swap;
+			}
+			if (inverts(model, uvAxis(sourceFace, false))) {
+				float swap = v0;
+				v0 = v1;
+				v1 = swap;
+			}
 			cube.polygons[index] = new ModelPart.Polygon(polygon.vertices().clone(),
-					uv.get(0).getAsFloat(), uv.get(1).getAsFloat(),
-					uv.get(2).getAsFloat(), uv.get(3).getAsFloat(),
-					textureSize.width(), textureSize.height(), false, face);
+					u0, v0, u1, v1, textureSize.width(), textureSize.height(), false, face);
 		}
+	}
+
+	private static String uvAxis(Direction face, boolean u) {
+		return switch (face) {
+			case EAST, WEST -> u ? "z" : "y";
+			case UP, DOWN -> u ? "x" : "z";
+			case NORTH, SOUTH -> u ? "x" : "y";
+		};
 	}
 
 	private static Direction sourceFace(Direction face, JsonObject model) {

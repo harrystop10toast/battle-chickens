@@ -39,8 +39,7 @@ public final class ModEntities {
 	public static final EntityType<PurgeChicken> RIOT_CHICKEN = registerRole("riot_chicken");
 	public static final EntityType<PurgeChicken> SERGEANT_CHICKEN = registerRole("sergeant_chicken");
 	public static final EntityType<PurgeChicken> MILITIA_CHICKEN = registerRole("militia_chicken");
-	public static final EntityType<PurgeChicken> RAVAGER_ASSAULT_CHICKEN =
-			registerRole("ravager_assault_chicken");
+	public static final EntityType<PurgeChicken> ASSAULT_CHICKEN = registerRole("assault_chicken");
 	public static final EntityType<PurgeChicken> SCAVENGER_CHICKEN = registerRole("scavenger_chicken");
 	public static final EntityType<PurgeChicken> GUNSHIP_GUNNER = registerRole("gunship_gunner");
 	public static final EntityType<PurgeChicken> OVERLORD_ROOSTER = registerRole("overlord_rooster");
@@ -75,7 +74,7 @@ public final class ModEntities {
 			Map.entry("rifle", MILITIA_CHICKEN),
 			Map.entry("militia", MILITIA_CHICKEN),
 			Map.entry("militia_chicken", MILITIA_CHICKEN),
-			Map.entry("ravager_assault_chicken", RAVAGER_ASSAULT_CHICKEN),
+			Map.entry("assault_chicken", ASSAULT_CHICKEN),
 			Map.entry("scavenger", SCAVENGER_CHICKEN),
 			Map.entry("scavenger_chicken", SCAVENGER_CHICKEN),
 			Map.entry("gunner", GUNSHIP_GUNNER),
@@ -101,7 +100,7 @@ public final class ModEntities {
 			Map.entry("giga_chicken", GIGA_CHICKEN));
 	private static final List<EntityType<? extends Chicken>> CHICKEN_TYPES = List.of(
 			WARRIOR_CHICKEN, RPG_CHICKEN, GRENADIER_CHICKEN, SNIPER_CHICKEN, MEDIC_CHICKEN,
-			RIOT_CHICKEN, SERGEANT_CHICKEN, MILITIA_CHICKEN, RAVAGER_ASSAULT_CHICKEN,
+			RIOT_CHICKEN, SERGEANT_CHICKEN, MILITIA_CHICKEN, ASSAULT_CHICKEN,
 			SCAVENGER_CHICKEN, GUNSHIP_GUNNER,
 			OVERLORD_ROOSTER, SUMMONER_GENERAL, TANK_GENERAL, BOMBER_GENERAL,
 			BUFFER_GENERAL, OVERLORD_BOMBARDIER, SUMMONED_CHICKEN, OUTPOST_GUARD, GIGA_CHICKEN,

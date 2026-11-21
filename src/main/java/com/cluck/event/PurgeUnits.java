@@ -64,8 +64,8 @@ public final class PurgeUnits {
 	private static final double BOMBER_MAX_DISTANCE = 18.0;
 	private static final double BOMBER_ATTACK_RANGE = 30.0;
 	private static final int OVERLORD_GENERAL_RESPAWN_TICKS = 2 * 60 * 20;
-	private static final int RAVAGER_ASSAULT_MAX_ACTIVE = 3;
-	private static final int RAVAGER_ASSAULTS_PER_WAVE = 1;
+	private static final int ASSAULT_CHICKEN_MAX_ACTIVE = 3;
+	private static final int ASSAULT_CHICKENS_PER_WAVE = 1;
 	private static final float LATE_SIEGE_WARRIOR_CHANCE = 0.1F;
 	private static final List<String> OVERLORD_GENERAL_NAMES = List.of(
 			"Summoner General", "Tank General", "Bomber General", "Buffer General");
@@ -84,6 +84,8 @@ public final class PurgeUnits {
 	private static final int UNIT_TICK_STRIDE = 5;
 	private static final double SUPPORT_DISTANCE = 10.0;
 	private static final double SUPPORT_DISTANCE_TOLERANCE = 1.0;
+	private static final int RPG_ROCKET_RELOAD_TICKS = 200;
+	private static final double RPG_ROCKET_RANGE = 48.0;
 	private static final double RIOT_DISTANCE = 5.0;
 	private static final int RIOT_SHOTGUN_RELOAD_TICKS = 160;
 	private static final double RIOT_SHOTGUN_RANGE = 20.0;
@@ -596,9 +598,6 @@ public final class PurgeUnits {
 			soldier.setHealth(health);
 		}
 		equipRole(soldier, role, data, level);
-		if (role.equals("rpg") && data.currentDay() == data.eventDays()) {
-			soldier.addTag("battle_chickens_infinite_rpg_ammo");
-		}
 		soldier.addTag("battle_chickens_military");
 		soldier.setCustomNameVisible(true);
 		soldier.setTarget(nearest);
@@ -644,9 +643,6 @@ public final class PurgeUnits {
 				raider.setPersistenceRequired();
 				equipRole(raider, role, data, level);
 				raider.setCustomNameVisible(true);
-				if (role.equals("rpg")) {
-					raider.addTag("battle_chickens_infinite_rpg_ammo");
-				}
 				raider.setTarget(player);
 				if (raider.getAttribute(Attributes.MAX_HEALTH) != null) {
 					double health = 20 * BattleChickens.CONFIG.enemyHealthMultiplier();
@@ -861,7 +857,11 @@ public final class PurgeUnits {
 			tickBomberGeneral(chicken, player, level, distanceSquared);
 			return;
 		}
-		if (chicken.entityTags().contains("battle_chickens_ravager_assault")) {
+		if (hasName(chicken, "RPG Chicken")) {
+			tickRpgChicken(chicken, player, level, distanceSquared);
+			return;
+		}
+		if (chicken.entityTags().contains("battle_chickens_assault")) {
 			if (distanceSquared > 2.8 * 2.8) {
 				chicken.getNavigation().moveTo(player, 2.4);
 			} else if (unitPulse(chicken, 40)) {
@@ -880,7 +880,9 @@ public final class PurgeUnits {
 			boolean mountedBossGunner = hasName(chicken, "Overlord Chicken")
 					&& isBoss(chicken.getVehicle())
 					|| hasName(chicken, "Sky Gunner")
-							&& BossController.isAerialBoss(chicken.getVehicle());
+							&& BossController.isAerialBoss(chicken.getVehicle())
+					|| hasName(chicken, "Gunship Gunner")
+							&& chicken.getVehicle() instanceof PurgeGunship;
 			if (!mountedBossGunner) {
 				if (distanceSquared < 10 * 10) {
 					moveAwayFrom(chicken, player, 7, 1.4);
@@ -948,10 +950,6 @@ public final class PurgeUnits {
 			return;
 		}
 		boolean overlordSniper = hasName(chicken, "Overlord Sniper");
-		boolean rpg = hasName(chicken, "RPG Chicken");
-		boolean regularRpgHasAmmo = !hasName(chicken, "RPG Chicken")
-				|| chicken.entityTags().contains("battle_chickens_infinite_rpg_ammo")
-				|| !chicken.entityTags().contains("battle_chickens_rpg_round_3");
 		if (hasName(chicken, "Sergeant Chicken") && unitPulse(chicken, 100)) {
 			for (Chicken ally : level.getEntitiesOfClass(Chicken.class, chicken.getBoundingBox().inflate(12),
 					candidate -> isUnit(candidate) && candidate != chicken)) {
@@ -1002,81 +1000,49 @@ public final class PurgeUnits {
 		}
 		boolean sniper = hasName(chicken, "Sniper Hen") || overlordSniper;
 		boolean mountedOverlordSniper = overlordSniper && isBoss(chicken.getVehicle());
-		if ((rpg && regularRpgHasAmmo) || sniper) {
-			double range = rpg ? 48 : overlordSniper ? 96 : 40;
-			double preferredRange = rpg ? 14 : 20;
+		if (sniper) {
+			double range = overlordSniper ? 96 : 40;
+			double preferredRange = 20;
 			boolean clearShot = hasClearAttackPath(level, chicken, player);
 			if (distanceSquared > 3.5 * 3.5 && distanceSquared <= range * range
 					&& clearShot) {
 				faceTarget(chicken, player.getBoundingBox().getCenter());
-				int reload;
-				if (rpg) {
-					reload = threat >= 4 ? 120 : 160;
-				} else if (overlordSniper) {
-					reload = 50;
-				} else {
-					reload = threat >= 4 ? 60 : 80;
-				}
-				int telegraphTicks = overlordSniper ? 35 : threat >= 4 ? 20 : 30;
+				int reload = overlordSniper ? 50 : threat >= 4 ? 60 : 80;
+				int telegraphTicks = overlordSniper ? 35 : 30;
 				int reloadStride = Math.max(1, reload / UNIT_TICK_STRIDE);
 				int phase = Math.floorMod(chicken.tickCount / UNIT_TICK_STRIDE, reloadStride);
 				int telegraphSamples = Math.max(1, telegraphTicks / UNIT_TICK_STRIDE);
 				boolean telegraphing = phase > 0 && phase >= reloadStride - telegraphSamples;
-				if (rpg && telegraphing) {
-					BulletTracer.telegraph(level, chicken.getEyePosition(),
-							player.getBoundingBox().getCenter());
+				if (telegraphing) {
+					BulletTracer.telegraph(level, chicken.getEyePosition(), player.getBoundingBox().getCenter());
 				}
 				if (phase == reloadStride - telegraphSamples) {
 					String warning = overlordSniper
 							? "The Overlord's sniper has you in its sights! Break line of sight!"
-							: rpg ? "An RPG chicken is lining up a rocket! Move!"
 							: "A chicken sights you! Take cover!";
 					BossController.showCombatAlert(player, net.minecraft.network.chat.Component.literal(warning));
 					level.playSound(null, player, SoundEvents.NOTE_BLOCK_PLING,
 							SoundSource.HOSTILE, 0.8F, 1.8F);
 				}
 				if (phase == 0 && chicken.tickCount >= reload) {
-					if (rpg) {
-						Vec3 eye = chicken.getEyePosition();
-						Vec3 target = player.getBoundingBox().getCenter();
-						Vec3 aim = target.subtract(eye);
-						if (hasName(chicken, "RPG Chicken")) {
-							Vec3 horizontal = new Vec3(aim.z, 0, -aim.x);
-							if (horizontal.lengthSqr() > 1.0e-6) {
-								horizontal = horizontal.normalize().scale(0.3);
-							}
-							boolean firstLaunched = level.addFreshEntity(new PurgeRocketEntity(level,
-									chicken, target.subtract(eye.add(horizontal.scale(-1))),
-									horizontal.scale(-1)));
-							boolean secondLaunched = level.addFreshEntity(new PurgeRocketEntity(level,
-									chicken, target.subtract(eye.add(horizontal)),
-									horizontal));
-							if (firstLaunched || secondLaunched) {
-								markRpgRoundUsed(chicken);
-							}
-						} else {
-							level.addFreshEntity(new PurgeRocketEntity(level, chicken, aim));
-						}
-					} else {
-						Vec3 eye = chicken.getEyePosition();
-						Vec3 aim = player.getBoundingBox().getCenter().subtract(eye);
-						double inaccuracy = overlordSniper ? 0.008 : 0.012;
-						Vec3 direction = BulletSpread.apply(aim, inaccuracy, level.getRandom());
-						Vec3 rangeEnd = eye.add(direction.scale(range));
-						var blockHit = level.clip(new ClipContext(eye, rangeEnd,
-								ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, chicken));
-						Vec3 traceEnd = blockHit.getType() == HitResult.Type.MISS
-								? rangeEnd : blockHit.getLocation();
-						BulletHit bulletHit = findBulletHit(level, chicken, eye, traceEnd);
-						if (bulletHit != null) {
-							traceEnd = bulletHit.location();
-						}
-						BulletTracer.fire(level, eye, traceEnd);
-						if (bulletHit != null) {
-							bulletHit.target().hurtServer(level, level.damageSources().mobAttack(chicken),
-									(overlordSniper ? 18 + threat * 3 : 7 + threat)
-											* BattleChickens.CONFIG.enemyDamageMultiplier());
-						}
+					Vec3 eye = chicken.getEyePosition();
+					Vec3 aim = player.getBoundingBox().getCenter().subtract(eye);
+					double inaccuracy = overlordSniper ? 0.008 : 0.012;
+					Vec3 direction = BulletSpread.apply(aim, inaccuracy, level.getRandom());
+					Vec3 rangeEnd = eye.add(direction.scale(range));
+					var blockHit = level.clip(new ClipContext(eye, rangeEnd,
+							ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, chicken));
+					Vec3 traceEnd = blockHit.getType() == HitResult.Type.MISS
+							? rangeEnd : blockHit.getLocation();
+					BulletHit bulletHit = findBulletHit(level, chicken, eye, traceEnd);
+					if (bulletHit != null) {
+						traceEnd = bulletHit.location();
+					}
+					BulletTracer.fire(level, eye, traceEnd);
+					if (bulletHit != null) {
+						bulletHit.target().hurtServer(level, level.damageSources().mobAttack(chicken),
+								(overlordSniper ? 18 + threat * 3 : 7 + threat)
+										* BattleChickens.CONFIG.enemyDamageMultiplier());
 					}
 				}
 				chicken.getNavigation().stop();
@@ -1158,6 +1124,41 @@ public final class PurgeUnits {
 				Vec3 direction = target.subtract(eye.add(muzzleOffset));
 				level.addFreshEntity(new PurgeRocketEntity(level, chicken, direction, muzzleOffset));
 			}
+		}
+	}
+
+	private static void tickRpgChicken(Chicken chicken, ServerPlayer player, ServerLevel level,
+			double distanceSquared) {
+		maintainSupportDistance(chicken, player);
+		Vec3 target = player.getBoundingBox().getCenter();
+		faceTarget(chicken, target);
+		if (distanceSquared <= 3.5 * 3.5 || distanceSquared > RPG_ROCKET_RANGE * RPG_ROCKET_RANGE
+				|| !hasClearAttackPath(level, chicken, player)) {
+			return;
+		}
+
+		int reloadStride = RPG_ROCKET_RELOAD_TICKS / UNIT_TICK_STRIDE;
+		int phase = Math.floorMod(chicken.tickCount / UNIT_TICK_STRIDE, reloadStride);
+		int telegraphSamples = 30 / UNIT_TICK_STRIDE;
+		if (phase > 0 && phase >= reloadStride - telegraphSamples) {
+			BulletTracer.telegraph(level, chicken.getEyePosition(), target);
+		}
+		if (phase == reloadStride - telegraphSamples) {
+			BossController.showCombatAlert(player,
+					net.minecraft.network.chat.Component.literal(
+							"An RPG chicken is lining up a rocket! Move!"));
+			level.playSound(null, player, SoundEvents.NOTE_BLOCK_PLING,
+					SoundSource.HOSTILE, 0.8F, 1.8F);
+		}
+		if (phase != 0 || chicken.tickCount < RPG_ROCKET_RELOAD_TICKS) {
+			return;
+		}
+
+		Vec3 aim = target.subtract(chicken.getEyePosition());
+		if (aim.lengthSqr() > 1.0e-6
+				&& level.addFreshEntity(new PurgeRocketEntity(level, chicken, aim))) {
+			level.playSound(null, chicken.blockPosition(), SoundEvents.CROSSBOW_SHOOT,
+					SoundSource.HOSTILE, 1.0F, 0.8F);
 		}
 	}
 
@@ -1911,10 +1912,10 @@ public final class PurgeUnits {
 		}
 	}
 
-	public static void spawnRavagerMilitia(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
+	public static void spawnAssaultChicken(ServerLevel level, OverlordBeast boss, ServerPlayer target, int threat) {
 		int active = level.getEntitiesOfClass(Chicken.class, boss.getBoundingBox().inflate(64),
-				entity -> entity.entityTags().contains("battle_chickens_ravager_assault")).size();
-		int count = Math.max(0, Math.min(RAVAGER_ASSAULTS_PER_WAVE, RAVAGER_ASSAULT_MAX_ACTIVE - active));
+				entity -> entity.entityTags().contains("battle_chickens_assault")).size();
+		int count = Math.max(0, Math.min(ASSAULT_CHICKENS_PER_WAVE, ASSAULT_CHICKEN_MAX_ACTIVE - active));
 		for (int index = 0; index < count; index++) {
 			double angle = level.getRandom().nextDouble() * Math.PI * 2;
 			double distance = 4 + level.getRandom().nextDouble() * 3;
@@ -1922,16 +1923,16 @@ public final class PurgeUnits {
 			int z = (int) Math.floor(boss.getZ() + Math.sin(angle) * distance);
 			int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
 			Chicken assault = ModEntities.createChicken(
-					level, EntitySpawnReason.EVENT, "ravager_assault_chicken");
+					level, EntitySpawnReason.EVENT, "assault_chicken");
 			if (assault == null) {
 				continue;
 			}
 			assault.setPos(x + 0.5, y, z + 0.5);
 			assault.setPersistenceRequired();
-			assault.setCustomName(net.minecraft.network.chat.Component.literal("Ravager Assault Chicken"));
+			assault.setCustomName(net.minecraft.network.chat.Component.literal("Assault Chicken"));
 			assault.setCustomNameVisible(true);
 			assault.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
-			assault.addTag("battle_chickens_ravager_assault");
+			assault.addTag("battle_chickens_assault");
 			assault.setTarget(target);
 			if (assault.getAttribute(Attributes.MAX_HEALTH) != null) {
 				double health = (20 + threat * 4) * BattleChickens.CONFIG.enemyHealthMultiplier();
@@ -2060,16 +2061,6 @@ public final class PurgeUnits {
 		}
 	}
 
-	private static void markRpgRoundUsed(Chicken chicken) {
-		for (int round = 1; round <= 3; round++) {
-			String tag = "battle_chickens_rpg_round_" + round;
-			if (!chicken.entityTags().contains(tag)) {
-				chicken.addTag(tag);
-				return;
-			}
-		}
-	}
-
 	public static boolean isBoss(Entity entity) {
 		return hasName(entity, "The Overlord");
 	}
@@ -2096,7 +2087,7 @@ public final class PurgeUnits {
 				|| name.equals("Overlord Chicken")
 				|| name.equals("Sky Gunner") || name.equals("Overlord Sniper")
 				|| name.endsWith("General") || name.equals("Summoned Chicken")
-				|| name.equals("Ravager Assault Chicken")
+				|| name.equals("Assault Chicken")
 				|| name.equals("Armored Ravager Tank") || name.equals("Golem Walker")
 				|| name.equals("Purge Drone");
 	}

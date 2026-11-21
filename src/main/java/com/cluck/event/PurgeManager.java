@@ -26,6 +26,7 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -35,13 +36,17 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.util.Prediction;
 
 import java.util.List;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -279,7 +284,9 @@ public final class PurgeManager {
 								.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 								.then(literal("day").then(argument("day", IntegerArgumentType.integer(1))
 										.executes(context -> debugDay(context.getSource(),
-												IntegerArgumentType.getInteger(context, "day"))))))
+												IntegerArgumentType.getInteger(context, "day")))))
+								.then(literal("kit").executes(context ->
+										debugKit(context.getSource().getPlayerOrException()))))
 						.then(literal("stop")
 								.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 								.executes(context -> stop(context.getSource().getLevel())))));
@@ -892,6 +899,164 @@ public final class PurgeManager {
 		source.sendSuccess(() -> Component.literal("Jumped to Purge Day " + day + " of "
 				+ data.eventDays() + "."), false);
 		return 1;
+	}
+
+	private static int debugKit(ServerPlayer player) {
+		var enchantments = player.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+		int overflowStacks = 0;
+		overflowStacks += equipDebugItem(player, EquipmentSlot.HEAD, enchanted(Items.NETHERITE_HELMET, enchantments, Map.of(
+				Enchantments.PROTECTION, 4,
+				Enchantments.UNBREAKING, 3,
+				Enchantments.MENDING, 1,
+				Enchantments.THORNS, 3,
+				Enchantments.RESPIRATION, 3,
+				Enchantments.AQUA_AFFINITY, 1)));
+		overflowStacks += equipDebugItem(player, EquipmentSlot.CHEST, enchanted(Items.NETHERITE_CHESTPLATE, enchantments,
+				Map.of(
+						Enchantments.PROTECTION, 4,
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1,
+						Enchantments.THORNS, 3)));
+		overflowStacks += equipDebugItem(player, EquipmentSlot.LEGS, enchanted(Items.NETHERITE_LEGGINGS, enchantments,
+				Map.of(
+						Enchantments.PROTECTION, 4,
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1,
+						Enchantments.THORNS, 3,
+						Enchantments.SWIFT_SNEAK, 3)));
+		overflowStacks += equipDebugItem(player, EquipmentSlot.FEET, enchanted(Items.NETHERITE_BOOTS, enchantments,
+				Map.of(
+						Enchantments.PROTECTION, 4,
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1,
+						Enchantments.THORNS, 3,
+						Enchantments.FEATHER_FALLING, 4,
+						Enchantments.DEPTH_STRIDER, 3,
+						Enchantments.SOUL_SPEED, 3)));
+		overflowStacks += equipDebugItem(player, EquipmentSlot.OFFHAND, new ItemStack(Items.TOTEM_OF_UNDYING));
+		List<ItemStack> kit = List.of(
+				enchanted(Items.NETHERITE_SWORD, enchantments, Map.of(
+						Enchantments.SHARPNESS, 5,
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1,
+						Enchantments.FIRE_ASPECT, 2,
+						Enchantments.LOOTING, 3,
+						Enchantments.SWEEPING_EDGE, 3)),
+				enchanted(Items.BOW, enchantments, Map.of(
+						Enchantments.POWER, 5,
+						Enchantments.PUNCH, 2,
+						Enchantments.FLAME, 1,
+						Enchantments.INFINITY, 1,
+						Enchantments.UNBREAKING, 3)),
+				enchanted(Items.CROSSBOW, enchantments, Map.of(
+						Enchantments.QUICK_CHARGE, 3,
+						Enchantments.PIERCING, 4,
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1)),
+				enchanted(Items.MACE, enchantments, Map.of(
+						Enchantments.DENSITY, 5,
+						Enchantments.WIND_BURST, 3,
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1)),
+				enchanted(Items.SHIELD, enchantments, Map.of(
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1)),
+				new ItemStack(ModItems.SINGULARITY_OMINOUS_EGG),
+				new ItemStack(ModItems.OVERLORD_CORE),
+				new ItemStack(ModItems.CAPTURED_PECKZOOKA),
+				new ItemStack(ModItems.CLUCK_SHIELD),
+				new ItemStack(ModItems.FEATHER_CLOAK),
+				new ItemStack(ModItems.EMP_DISRUPTOR),
+				new ItemStack(ModItems.EGG_CANNON),
+				new ItemStack(ModItems.FLAK_CANNON),
+				new ItemStack(ModItems.BEAK_47),
+				new ItemStack(ModItems.ROOSTER_SPEAR),
+				new ItemStack(ModItems.FLAME_FRYER),
+				new ItemStack(ModItems.SNIPER_BEAK),
+				new ItemStack(ModItems.MEDIC_SYRINGE),
+				new ItemStack(ModItems.DRUMSTICK_OF_VALOR),
+				new ItemStack(ModItems.GOLDEN_EGG),
+				new ItemStack(ModItems.PURGE_GRENADE, 16),
+				new ItemStack(ModItems.FLOCKWAR_HORN),
+				new ItemStack(ModItems.SCRAP_CIRCUIT, 64),
+				new ItemStack(ModItems.GUNPOWDER_POUCH, 64),
+				new ItemStack(ModItems.DUD_ROCKET, 16),
+				new ItemStack(ModItems.ROCKET_CASING, 64),
+				new ItemStack(Items.WHEAT_SEEDS, 64),
+				new ItemStack(Items.ARROW, 64),
+				new ItemStack(Items.EGG, 16),
+				new ItemStack(Items.ENCHANTED_GOLDEN_APPLE, 16),
+				new ItemStack(Items.GOLDEN_APPLE, 64),
+				enchanted(Items.NETHERITE_AXE, enchantments, Map.of(
+						Enchantments.SHARPNESS, 5,
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1,
+						Enchantments.EFFICIENCY, 5,
+						Enchantments.FORTUNE, 3)),
+				enchanted(Items.NETHERITE_PICKAXE, enchantments, Map.of(
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1,
+						Enchantments.EFFICIENCY, 5,
+						Enchantments.FORTUNE, 3)),
+				enchanted(Items.TRIDENT, enchantments, Map.of(
+						Enchantments.IMPALING, 5,
+						Enchantments.LOYALTY, 3,
+						Enchantments.CHANNELING, 1,
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1)),
+				enchanted(Items.ELYTRA, enchantments, Map.of(
+						Enchantments.UNBREAKING, 3,
+						Enchantments.MENDING, 1)),
+				new ItemStack(Items.COOKED_CHICKEN, 64),
+				new ItemStack(Items.GOLDEN_CARROT, 64),
+				new ItemStack(Items.ENDER_PEARL, 16),
+				new ItemStack(Items.FIREWORK_ROCKET, 64),
+				new ItemStack(Items.MILK_BUCKET),
+				new ItemStack(ModItems.FLOCKGUARD_SIGIL),
+				new ItemStack(ModItems.LASSO),
+				new ItemStack(ModItems.CLUCK_RADAR),
+				new ItemStack(ModItems.SIGNAL_SCRAMBLER),
+				new ItemStack(ModItems.RATIONS_CRATE),
+				new ItemStack(ModItems.OVERLORD_CROWN),
+				new ItemStack(ModItems.OVERLORD_SHARD, 64),
+				new ItemStack(ModItems.OMINOUS_EGG),
+				new ItemStack(ModItems.GILDED_OMINOUS_EGG),
+				new ItemStack(ModItems.CURSED_OMINOUS_EGG),
+				new ItemStack(ModItems.WARLORD_OMINOUS_EGG));
+
+		for (ItemStack stack : kit) {
+			if (!player.addItem(stack) && !stack.isEmpty()) {
+				player.drop(stack, false, Prediction.SERVER_ONLY);
+				overflowStacks++;
+			}
+		}
+
+		String message = "Purge debug kit added with " + kit.size() + " item stacks.";
+		if (overflowStacks > 0) {
+			message += " " + overflowStacks + " overflow stack(s) dropped nearby.";
+		}
+		player.sendSystemMessage(Component.literal(message));
+		return 1;
+	}
+
+	private static int equipDebugItem(ServerPlayer player, EquipmentSlot slot, ItemStack replacement) {
+		ItemStack displaced = player.getItemBySlot(slot).copy();
+		player.setItemSlot(slot, replacement);
+		if (!displaced.isEmpty() && !player.addItem(displaced) && !displaced.isEmpty()) {
+			player.drop(displaced, false, Prediction.SERVER_ONLY);
+			return 1;
+		}
+		return 0;
+	}
+
+	private static ItemStack enchanted(
+			net.minecraft.world.item.Item item,
+			net.minecraft.core.HolderLookup.RegistryLookup<Enchantment> enchantments,
+			Map<ResourceKey<Enchantment>, Integer> levels
+	) {
+		ItemStack stack = new ItemStack(item);
+		levels.forEach((key, level) -> stack.enchant(enchantments.getOrThrow(key), level));
+		return stack;
 	}
 
 	private static int stop(ServerLevel level) {

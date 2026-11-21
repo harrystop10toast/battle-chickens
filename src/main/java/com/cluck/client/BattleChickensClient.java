@@ -1,6 +1,7 @@
 package com.cluck.client;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import com.cluck.entity.ModEntities;
@@ -8,6 +9,7 @@ import com.cluck.entity.ModEntities;
 public final class BattleChickensClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
+		ClientTickEvents.END_CLIENT_TICK.register(FirstPersonRecoil::tickHeldTubeParticle);
 		ModelLayerRegistry.registerModelLayer(MedicChickenRenderer.MODEL_LAYER,
 				MedicChickenRenderer::createLayer);
 		ModelLayerRegistry.registerModelLayer(GrenadierChickenRenderer.MODEL_LAYER,
@@ -23,8 +25,8 @@ public final class BattleChickensClient implements ClientModInitializer {
 				EntityRendererRegistry.register(type, MedicChickenRenderer::new);
 			} else if (type == ModEntities.MILITIA_CHICKEN) {
 				EntityRendererRegistry.register(type, MilitiaChickenRenderer::new);
-			} else if (type == ModEntities.RAVAGER_ASSAULT_CHICKEN) {
-				EntityRendererRegistry.register(type, RavagerAssaultChickenRenderer::new);
+			} else if (type == ModEntities.ASSAULT_CHICKEN) {
+				EntityRendererRegistry.register(type, AssaultChickenRenderer::new);
 			} else if (type == ModEntities.GRENADIER_CHICKEN) {
 				EntityRendererRegistry.register(type, GrenadierChickenRenderer::new);
 			} else if (type == ModEntities.RPG_CHICKEN) {
@@ -66,5 +68,7 @@ public final class BattleChickensClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.VETERAN_ROOSTER, VeteranRoosterRenderer::new);
 		ItemTooltipHandler.register();
 		NemesisTrophyTooltip.register();
+		Beak47AimOverlay.register();
+		SniperBeakScopeOverlay.register();
 	}
 }

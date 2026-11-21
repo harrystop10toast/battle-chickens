@@ -9,13 +9,13 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.animal.chicken.Chicken;
 
-public final class RavagerAssaultChickenRenderer
+public final class AssaultChickenRenderer
 		extends MobRenderer<Chicken, ChickenRenderState, ChickenModel> {
 	private static final ChickenJemModel JEM =
 			ChickenJemModel.load("/assets/battle-chickens/optifine/cem/assault.jem");
 	private static final Identifier TEXTURE = JEM.texture();
 
-	public RavagerAssaultChickenRenderer(EntityRendererProvider.Context context) {
+	public AssaultChickenRenderer(EntityRendererProvider.Context context) {
 		super(context, new AdultChickenModel(JEM.createModel()), 0.3F);
 	}
 

@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "com.cluck.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"EntityPoseMixin",
+		"PlayerPoseMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -557,7 +557,7 @@ public final class BossController {
 			PurgeUnits.throwOverlordBarrel(level, boss, target, threat);
 		}
 		if (boss.tickCount % 120 == 0) {
-			PurgeUnits.spawnRavagerMilitia(level, boss, target, threat);
+			PurgeUnits.spawnAssaultChicken(level, boss, target, threat);
 		}
 		if (boss.tickCount % 240 == 0) {
 			PurgeUnits.spawnWarlordGunner(level, boss, target, "Overlord Gunner", false);

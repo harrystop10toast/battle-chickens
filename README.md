@@ -272,6 +272,7 @@ Many items feature custom colored multi-line tooltips (categorized by tag, descr
 | :--- | :--- | :--- |
 | **Scavenger Chicken** | Light melee; swarms players. | Day 1+ |
 | **Militia Chicken** | Iron sword; armed melee with increased health and damage. | Day 1+ |
+| **Assault Chicken** | Iron sword; spawned by the ground Overlord to pursue and tackle players. | Day 7 Boss Fight |
 | **Sergeant Chicken** | No held weapon; inspires nearby units with Strength. | Day 2+ |
 | **Grenadier Hen** | 3D bomb backpack; lobs timed Purge Grenades. | Day 2+ |
 | **Sniper Hen** | Sniper Beak rifle; telegraphs shots from up to 96 blocks. | Day 3+ |

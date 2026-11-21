@@ -98,7 +98,7 @@ public final class PurgeChicken extends Chicken {
 			case "riot_chicken" -> "Riot Chicken";
 			case "sergeant_chicken" -> "Sergeant Chicken";
 			case "militia_chicken" -> "Militia Chicken";
-			case "ravager_assault_chicken" -> "Ravager Assault Chicken";
+			case "assault_chicken" -> "Assault Chicken";
 			case "scavenger_chicken" -> "Scavenger Chicken";
 			case "gunship_gunner" -> "Gunship Gunner";
 			case "overlord_rooster" -> "Overlord Rooster";
@@ -124,7 +124,7 @@ public final class PurgeChicken extends Chicken {
 			case "medic_chicken" -> new ItemStack(Items.SPLASH_POTION);
 			case "riot_chicken" -> new ItemStack(Items.CROSSBOW);
 			case "tank_general" -> new ItemStack(Items.IRON_AXE);
-			case "militia_chicken", "ravager_assault_chicken", "scavenger_chicken",
+			case "militia_chicken", "assault_chicken", "scavenger_chicken",
 					"gunship_gunner", "overlord_rooster", "summoner_general",
 					"buffer_general", "outpost_guard" -> new ItemStack(Items.IRON_SWORD);
 			default -> ItemStack.EMPTY;

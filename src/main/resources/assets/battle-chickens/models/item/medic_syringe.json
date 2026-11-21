@@ -1,7 +1,7 @@
 {
   "textures": {
-    "particle": "battle-chickens:item/chicken",
-    "0": "battle-chickens:item/chicken"
+    "particle": "battle-chickens:item/medic_syringe",
+    "0": "battle-chickens:item/medic_syringe"
   },
   "elements": [
     {
@@ -9,11 +9,11 @@
       "to": [14.4, 16, 8.5],
       "faces": {
         "north": {
-          "uv": [10, 0.25, 16, 7.75],
+          "uv": [0, 0, 16, 16],
           "texture": "#0"
         },
         "south": {
-          "uv": [10, 0.25, 16, 7.75],
+          "uv": [0, 0, 16, 16],
           "texture": "#0"
         }
       }

@@ -18,7 +18,8 @@ public final class NemesisTrophyTooltip {
 		HudElementRegistry.attachElementAfter(VanillaHudElements.CROSSHAIR,
 				BattleChickens.id("nemesis_trophy_tooltip"), (graphics, deltaTracker) -> {
 					Minecraft minecraft = Minecraft.getInstance();
-					if (minecraft.gui.screen() != null || !(minecraft.hitResult instanceof EntityHitResult hit)
+					if (SniperBeakScopeOverlay.isAiming() || minecraft.gui.screen() != null
+							|| !(minecraft.hitResult instanceof EntityHitResult hit)
 							|| !(hit.getEntity() instanceof ItemFrame frame)) {
 						return;
 					}

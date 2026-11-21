@@ -17,11 +17,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.chicken.Chicken;
@@ -32,6 +34,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
@@ -45,9 +48,15 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public final class BattleTechItem extends Item {
+	private static final double FLAME_CONE_SPREAD_PER_BLOCK = 0.4;
+	private static final int FLAME_FRYER_USE_DURATION = 72_000;
+	private static final int FLAME_FRYER_AMMO_INTERVAL_TICKS = 8;
+
 	public enum Ability {
 		CLUCK_SHIELD,
 		FEATHER_CLOAK,
@@ -76,6 +85,10 @@ public final class BattleTechItem extends Item {
 	@Override
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
 		if (level.isClientSide()) {
+			if (ability == Ability.FLAME_FRYER) {
+				player.startUsingItem(hand);
+				return InteractionResult.CONSUME;
+			}
 			return InteractionResult.SUCCESS;
 		}
 		if (!(player instanceof ServerPlayer serverPlayer)) {
@@ -90,7 +103,7 @@ public final class BattleTechItem extends Item {
 			case ORBITAL_STRIKE -> orbitalStrike(serverPlayer, hand);
 			case BEAK_47 -> beak47(serverPlayer);
 			case ROOSTER_SPEAR -> roosterSpear(serverPlayer);
-			case FLAME_FRYER -> flameFryer(serverPlayer, hand);
+			case FLAME_FRYER -> startFlameFryer(serverPlayer, hand);
 			case SNIPER_BEAK -> sniperBeak(serverPlayer);
 			case MEDIC_SYRINGE -> medicSyringe(serverPlayer);
 			case DRUMSTICK_OF_VALOR -> drumstick(serverPlayer);
@@ -102,9 +115,50 @@ public final class BattleTechItem extends Item {
 	}
 
 	@Override
+	public int getUseDuration(ItemStack stack, LivingEntity user) {
+		return ability == Ability.FLAME_FRYER
+				? FLAME_FRYER_USE_DURATION
+				: super.getUseDuration(stack, user);
+	}
+
+	@Override
+	public ItemUseAnimation getUseAnimation(ItemStack stack) {
+		return ability == Ability.FLAME_FRYER
+				? ItemUseAnimation.NONE
+				: super.getUseAnimation(stack);
+	}
+
+	@Override
+	public void onUseTick(Level level, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+		if (ability != Ability.FLAME_FRYER
+				|| !(level instanceof ServerLevel)
+				|| !(user instanceof ServerPlayer player)) {
+			return;
+		}
+		int heldTicks = FLAME_FRYER_USE_DURATION - remainingUseTicks;
+		if (heldTicks > FLAME_FRYER_AMMO_INTERVAL_TICKS
+				&& (heldTicks - 1) % FLAME_FRYER_AMMO_INTERVAL_TICKS == 0
+				&& !consume(player, ModItems.GUNPOWDER_POUCH)) {
+			player.stopUsingItem();
+			player.sendSystemMessage(Component.literal("The Flame Fryer needs a Gunpowder Pouch."));
+			return;
+		}
+		flameFryer(player, player.getUsedItemHand());
+	}
+
+	@Override
 	public InteractionResult useOn(UseOnContext context) {
 		Player player = context.getPlayer();
 		return player == null ? InteractionResult.PASS : use(context.getLevel(), player, context.getHand());
+	}
+
+	private boolean startFlameFryer(ServerPlayer player, InteractionHand hand) {
+		if (!consume(player, ModItems.GUNPOWDER_POUCH)) {
+			player.sendSystemMessage(Component.literal("The Flame Fryer needs a Gunpowder Pouch."));
+			return false;
+		}
+		player.startUsingItem(hand);
+		return true;
 	}
 
 	private boolean shield(ServerPlayer player) {
@@ -321,46 +375,133 @@ public final class BattleTechItem extends Item {
 		return true;
 	}
 
-	private boolean flameFryer(ServerPlayer player, InteractionHand hand) {
+	private void flameFryer(ServerPlayer player, InteractionHand hand) {
 		ServerLevel level = player.level();
 		Vec3 look = player.getLookAngle().normalize();
-		var targets = level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(7),
+		Vec3 right = new Vec3(look.z, 0, -look.x);
+		if (right.lengthSqr() < 1.0E-6) {
+			right = new Vec3(1, 0, 0);
+		} else {
+			right = right.normalize();
+		}
+		Vec3 up = look.cross(right).normalize();
+		boolean rightHanded = (hand == InteractionHand.MAIN_HAND)
+				== (player.getMainArm() == HumanoidArm.RIGHT);
+		Vec3 muzzle = player.getEyePosition().add(look.scale(0.75))
+				.add(right.scale(rightHanded ? 0.28 : -0.28))
+				.add(0, -0.18, 0);
+		var targets = level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(8),
 				entity -> entity != player && entity.isAlive()).stream().filter(target -> {
-					Vec3 offset = target.getBoundingBox().getCenter().subtract(player.getEyePosition());
-					return offset.lengthSqr() <= 49 && look.dot(offset.normalize()) > 0.65
+					return isInsideFlameCone(muzzle, look, target.getBoundingBox().getCenter())
 							&& player.hasLineOfSight(target);
 				}).toList();
 		BlockHitResult blockHit = player.pick(7, 0, false) instanceof BlockHitResult hit ? hit : null;
 		boolean canIgnite = blockHit != null && player.mayBuild()
 				&& level.getGameRules().get(GameRules.MOB_GRIEFING);
-		if (targets.isEmpty() && !canIgnite) {
-			return false;
+		if (canIgnite) {
+			igniteStructure(player, hand, level, blockHit, muzzle, look, right, up);
 		}
-		if (!consume(player, ModItems.GUNPOWDER_POUCH)) {
-			player.sendSystemMessage(Component.literal("The Flame Fryer needs a Gunpowder Pouch."));
-			return false;
-		}
-		boolean ignited = canIgnite && igniteStructure(player, hand, level, blockHit);
 		for (LivingEntity target : targets) {
 			target.setRemainingFireTicks(100);
 			damage(player, target, 4);
 		}
-		if (ignited) {
-			player.sendSystemMessage(Component.literal("The Flame Fryer ignites the structure."));
+		RandomSource random = level.getRandom();
+		for (int i = 0; i < 8; i++) {
+			double distance = random.nextDouble() * 4.5;
+			Vec3 coneOffset = randomConeOffset(random, right, up, distance, FLAME_CONE_SPREAD_PER_BLOCK);
+			Vec3 position = muzzle.add(look.scale(distance))
+					.add(coneOffset);
+			Vec3 velocity = look.scale(0.3 + random.nextDouble() * 0.25)
+					.add(coneOffset.scale(0.035));
+			level.sendParticles(ParticleTypes.FLAME, position.x, position.y, position.z,
+					0, velocity.x, velocity.y, velocity.z, 1.0);
 		}
-		level.sendParticles(ParticleTypes.FLAME, player.getX() + look.x * 2, player.getEyeY(),
-				player.getZ() + look.z * 2, 18, 0.4, 0.3, 0.4, 0.04);
-		cooldown(player, 20);
-		return true;
+		for (int i = 0; i < 1; i++) {
+			double distance = random.nextDouble() * 0.9;
+			Vec3 position = muzzle.add(look.scale(distance))
+					.add(randomConeOffset(random, right, up, distance, 0.1));
+			Vec3 velocity = look.scale(0.22 + random.nextDouble() * 0.18)
+					.add(up.scale((random.nextDouble() - 0.5) * 0.18));
+			level.sendParticles(ParticleTypes.LAVA, position.x, position.y, position.z,
+					0, velocity.x, velocity.y, velocity.z, 1.0);
+		}
+		for (int i = 0; i < 2; i++) {
+			double distance = random.nextDouble() * 2.2;
+			Vec3 position = muzzle.add(look.scale(distance))
+					.add(randomConeOffset(random, right, up, distance, 0.18));
+			Vec3 velocity = look.scale(0.12 + random.nextDouble() * 0.16)
+					.add(up.scale(0.04 + random.nextDouble() * 0.08));
+			level.sendParticles(ParticleTypes.SMOKE, position.x, position.y, position.z,
+					0, velocity.x, velocity.y, velocity.z, 1.0);
+		}
 	}
 
-	private boolean igniteStructure(ServerPlayer player, InteractionHand hand, ServerLevel level, BlockHitResult hit) {
-		BlockPlaceContext context = new BlockPlaceContext(player, hand, player.getItemInHand(hand), hit);
-		var fire = Blocks.FIRE.getStateForPlacement(context);
-		if (fire == null || !fire.canSurvive(level, context.getClickedPos())) {
+	private static Vec3 randomConeOffset(RandomSource random, Vec3 right, Vec3 up,
+			double distance, double spreadPerBlock) {
+		double angle = random.nextDouble() * Math.PI * 2;
+		double radius = Math.sqrt(random.nextDouble()) * (0.025 + distance * spreadPerBlock);
+		return right.scale(Math.cos(angle) * radius).add(up.scale(Math.sin(angle) * radius));
+	}
+
+	private static boolean isInsideFlameCone(Vec3 origin, Vec3 look, Vec3 point) {
+		Vec3 offset = point.subtract(origin);
+		double distance = offset.dot(look);
+		if (distance <= 0.0 || distance > 7.0) {
 			return false;
 		}
-		return level.setBlock(context.getClickedPos(), fire, 3);
+		double radius = 0.025 + distance * FLAME_CONE_SPREAD_PER_BLOCK;
+		double radialDistanceSqr = Math.max(0.0, offset.lengthSqr() - distance * distance);
+		return radialDistanceSqr <= radius * radius;
+	}
+
+	private boolean igniteStructure(ServerPlayer player, InteractionHand hand, ServerLevel level,
+			BlockHitResult hit, Vec3 muzzle, Vec3 look, Vec3 right, Vec3 up) {
+		BlockPlaceContext context = new BlockPlaceContext(player, hand, player.getItemInHand(hand), hit);
+		var fire = Blocks.FIRE.getStateForPlacement(context);
+		if (fire == null) {
+			return false;
+		}
+
+		double range = Math.min(7.0, muzzle.distanceTo(hit.getLocation()));
+		int placed = 0;
+		Set<BlockPos> checked = new HashSet<>();
+		Set<BlockPos> placedPositions = new HashSet<>();
+		for (double distance = 1.0; distance <= range; distance += 0.4) {
+			double radius = 0.025 + distance * FLAME_CONE_SPREAD_PER_BLOCK;
+			int divisions = Math.max(1, (int) Math.ceil(radius / 0.35));
+			Vec3 axisPoint = muzzle.add(look.scale(distance));
+			for (int sideIndex = -divisions; sideIndex <= divisions; sideIndex++) {
+				double sideOffset = radius * sideIndex / divisions;
+				for (int upIndex = -divisions; upIndex <= divisions; upIndex++) {
+					double upOffset = radius * upIndex / divisions;
+					if (sideOffset * sideOffset + upOffset * upOffset > radius * radius) {
+						continue;
+					}
+					BlockPos candidate = BlockPos.containing(axisPoint
+							.add(right.scale(sideOffset)).add(up.scale(upOffset)));
+					if (!checked.add(candidate)) {
+						continue;
+					}
+					BlockPos firePos = findFireSpreadPosition(level, candidate, fire);
+					if (firePos != null && placedPositions.add(firePos)
+							&& level.setBlock(firePos, fire, 3)) {
+						placed++;
+					}
+				}
+			}
+		}
+		return placed > 0;
+	}
+
+	private static BlockPos findFireSpreadPosition(ServerLevel level, BlockPos target,
+			net.minecraft.world.level.block.state.BlockState fire) {
+		BlockPos[] candidates = {target, target.below(), target.above()};
+		for (BlockPos candidate : candidates) {
+			if (level.isEmptyBlock(candidate) && fire.canSurvive(level, candidate)) {
+				return candidate;
+			}
+		}
+		return null;
 	}
 
 	private boolean sniperBeak(ServerPlayer player) {
@@ -368,9 +509,11 @@ public final class BattleTechItem extends Item {
 			player.sendSystemMessage(Component.literal("The Sniper Beak needs an arrow."));
 			return false;
 		}
-		LivingEntity target = fireBullet(player, 64, 0.004, 0.04);
+		int viewDistance = Math.max(1, Math.min(player.requestedViewDistance(),
+				player.level().getServer().getPlayerList().getViewDistance()));
+		LivingEntity target = fireBullet(player, viewDistance * 16.0, 0.004, 0.04);
 		if (target != null) {
-			damage(player, target, 24);
+			damage(player, target, player.isCrouching() ? 36 : 24);
 			player.level().sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1,
 					target.getZ(), 12, 0.15, 0.2, 0.15, 0.1);
 		}
@@ -491,10 +634,19 @@ public final class BattleTechItem extends Item {
 	private static LivingEntity fireBullet(ServerPlayer player, double range,
 			double baseInaccuracy, double movementInaccuracy) {
 		ServerLevel level = player.level();
-		Vec3 direction = BulletSpread.apply(player.getLookAngle(),
-				baseInaccuracy + Math.min(player.getDeltaMovement().horizontalDistance(), 0.3)
-						* movementInaccuracy,
-				level.getRandom());
+		Vec3 movement = player.getDeltaMovement();
+		double horizontalSpeed = movement.horizontalDistance();
+		boolean stationary = player.onGround() && !player.isSprinting() && horizontalSpeed < 0.005;
+		double inaccuracy = stationary
+				? baseInaccuracy * (player.isCrouching() ? 0.02 : 0.1)
+				: baseInaccuracy + Math.min(horizontalSpeed, 0.3) * movementInaccuracy + 0.035;
+		if (!stationary && player.isSprinting()) {
+			inaccuracy += 0.035;
+		}
+		if (!stationary && !player.onGround()) {
+			inaccuracy += 0.05;
+		}
+		Vec3 direction = BulletSpread.apply(player.getLookAngle(), inaccuracy, level.getRandom());
 		Vec3 start = player.getEyePosition().add(direction.scale(0.45));
 		Vec3 rangeEnd = start.add(direction.scale(range));
 		var blockHit = level.clip(new ClipContext(start, rangeEnd,

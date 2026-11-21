@@ -1,0 +1,17 @@
+{
+	"required": true,
+	"package": "com.cluck.mixin.client",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"PlayerModelMixin",
+		"AvatarRendererMixin",
+		"FirstPersonHandsAndItemsMixin",
+		"FirstPersonHandsAndItemsRendererMixin",
+		"FlameFryerItemParticleMixin",
+		"ItemUseRecoilMixin",
+		"CameraMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
